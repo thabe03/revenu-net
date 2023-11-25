@@ -18,6 +18,7 @@ class RevenuBrut:
         self.membre_commerce = membre_commerce
         self.patron_frais_deplacement = 0
         self.revenu_net_emploi = 0
+        self.rpa = 0
 
     def bure(self, fourn_cons = 0, loyer_bureau = 0, mois = 0, salaire_adjoint = 0):
         self.bureau = fourn_cons + loyer_bureau * mois + salaire_adjoint
@@ -52,6 +53,7 @@ class RevenuBrut:
             return self.advantage_action
     
     def sb(self, salaire_net = 0, impot_revenu_fed_prov = 0, rrq = 0, ass_emploi = 0, ass_parentale = 0, rpa = 0, cot_syndic = 0, ass_collectif = 0):
+        self.rpa = rpa
         print("[INFO] revenu_brut.RevenuBrut.sb() Régime de rentes du Québec crédit d'impôt", rrq)
         print("[INFO] revenu_brut.RevenuBrut.sb() Assurance emploi crédit d'impôt", ass_emploi)
         print("[INFO] revenu_brut.RevenuBrut.sb() Régime du Québec d'assurance parentale crédit d'impôt", ass_parentale)
@@ -72,9 +74,11 @@ class RevenuBrut:
         return self.revenu_brut_emploi
     
     def dah(self, depense_ext = 0, cot_syndic = 0, rpa = 0, bureau_centre_ville = 0, cot_professionnelle = 0, don = 0, frais_cartes_affaires = 0):
+        if not rpa == 0:
+            self.rpa = rpa
         if not bureau_centre_ville == 0:
             self.bureau = bureau_centre_ville
-        self.deduction_article_huit = depense_ext + cot_syndic + rpa + self.bureau + cot_professionnelle
+        self.deduction_article_huit = depense_ext + cot_syndic + self.rpa + self.bureau + cot_professionnelle
         if self.patron_frais_deplacement == 0:
             self.deduction_article_huit+= self.cauto.deductible_amort_interet_pret
         if not self.patron_frais_deplacement == 0:
@@ -93,5 +97,5 @@ class RevenuBrut:
     
     def calcul(self):
         self.revenu_net_emploi = self.revenu_brut_emploi - self.deduction_article_huit - self.commission_brute if self.deduction_article_huit_vendeur > self.commission_brute else self.revenu_brut_emploi - self.deduction_article_huit - self.deduction_article_huit_vendeur
-        print("[INFO] revenu_brut.RevenuBrut.calcul()", round(self.revenu_brut_emploi), round(self.deduction_article_huit), round(self.deduction_article_huit_vendeur), round(self.revenu_net_emploi))
+        print("[INFO] revenu_brut.RevenuBrut.calcul()", round(self.revenu_brut_emploi), round(self.deduction_article_huit), round(self.commission_brute if self.deduction_article_huit_vendeur > self.commission_brute else self.revenu_brut_emploi), round(self.revenu_net_emploi))
         return f"{round(self.revenu_brut_emploi)} {round(self.deduction_article_huit)} {round(self.deduction_article_huit_vendeur)} {round(self.revenu_net_emploi)}"

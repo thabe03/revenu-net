@@ -28,13 +28,13 @@ class RevenuNet:
     self.gain_perte = 0
     self.deduction = 0
     self.perte_entreprise = 0
-
     self.perte_placement = 0
     self.rpa = 0
     self.beneficiaire = 0
     self.frais_demenagement = 0
     self.psv = 0
     self.revenu_net = 0
+    self.revenu_agricole = 0
 
   @staticmethod
   def dd(array = []):
@@ -64,21 +64,24 @@ class RevenuNet:
     self.frais_demenagement = (repas_par_jour + logement_par_jour + resiliation_bail + demenagement + entreposage + notaire_ph + veterinaire + frais_amenagement) - portion_deduite_ap
     return self.frais_demenagement
 
-  def a(self, revenu_net_emploi = 0, revenu_entreprise = 0, revenu_agricole = 0, revenu_interet = 0, revenu_dividende = 0, pension_ex = 0, ferr = 0, psv = 0, rpa = 0, rrq = 0, montant_fractionne = 0, prestation_retraite = 0, allocation_depart_retraite = 0, prestation_consecutive_deces = 0, police_ass = 0, bourse_etude = 0):
+  def a(self, revenu_net_emploi = 0, revenu_entreprise = 0, revenu_agricole = 0, revenu_interet = [0,0], revenu_dividende_ordinaire = 0, revenu_dividende_determine = 0, pension_ex = 0, ferr = 0, psv = 0, rpa = 0, rrq = 0, prestation_retraite = 0, allocation_depart_retraite = 0, prestation_consecutive_deces = 0, police_ass = 0, bourse_etude = 0, revenu_location = 0, reer = [0,0]):
     police_ass = 0
     bourse_etude = 0
     self.rpa = rpa
     self.psv = psv
+    self.revenu_agricole = revenu_agricole
     prestation_consecutive_deces = prestation_consecutive_deces-self.dd([prestation_consecutive_deces]) if prestation_consecutive_deces - self.dd([prestation_consecutive_deces]) > 0 else 0
-    self.revenu = revenu_net_emploi + revenu_entreprise + revenu_agricole + revenu_interet + revenu_dividende+int(revenu_dividende*0.15) + pension_ex + ferr + self.psv + self.rpa + rrq + montant_fractionne + prestation_retraite + allocation_depart_retraite + prestation_consecutive_deces
+    self.revenu = revenu_net_emploi + revenu_entreprise + self.revenu_agricole + revenu_interet[0]-revenu_interet[1] + revenu_dividende_ordinaire+int(revenu_dividende_ordinaire*0.15) + revenu_dividende_determine+int(revenu_dividende_determine*0.38) + pension_ex + ferr + self.psv + self.rpa + rrq + prestation_retraite + allocation_depart_retraite + prestation_consecutive_deces + revenu_location + reer[0]+reer[1]
     return self.revenu
   
   def b(self, gain_capital_imposable = 0, perte_capital_deductible = 0, perte_placement = 0):
-    self.perte_placement = perte_placement
-    self.gain_perte = gain_capital_imposable - (perte_capital_deductible - perte_placement)
+    gain_capital_imposable = gain_capital_imposable*0.5
+    perte_capital_deductible = perte_capital_deductible*0.5
+    self.perte_placement = perte_placement*0.5
+    self.gain_perte = gain_capital_imposable - (perte_capital_deductible - self.perte_placement)
     if self.gain_perte < 0:
       if perte_placement > 0:
-        print("[INFO] revenu_net.RevenuNet.b Perte en capital", perte_capital_deductible - perte_placement-gain_capital_imposable, "à reporter")
+        print("[INFO] revenu_net.RevenuNet.b Perte en capital", perte_capital_deductible - self.perte_placement-gain_capital_imposable, "à reporter")
       else:
         print("[INFO] revenu_net.RevenuNet.b Perte en capital", self.gain_perte*-1, "à reporter")
       self.gain_perte = 0
@@ -86,7 +89,7 @@ class RevenuNet:
     else:
       return self.gain_perte 
   
-  def c(self, autres = 0, pension_ex = 0, frais_exploration = 0, frais_opposition = 0, frais_demenagement = 0, montant_fractionne = 0.0, frais_proc_ass_emploi = 0, prestation_consecutive_deces = 0, reer = 0, frais_scolarite = 0, vetement = 0, prime_ass_vie_med_dent = 0, frais_prep_declaration = 0):
+  def c(self, autres = 0, pension_ex = 0, frais_exploration = 0, frais_opposition = 0, frais_demenagement = 0, montant_fractionne = 0.0, frais_proc_ass_emploi = 0, prestation_consecutive_deces = 0, reer = 0, frais_scolarite = 0, prime_ass_vie_med_dent = 0):
     if not frais_demenagement == 0:
       self.frais_demenagement = frais_demenagement
     if frais_scolarite > 0:
@@ -121,9 +124,32 @@ class RevenuNet:
     self.perte_entreprise = reporter("d", "Perte d'entreprise", 1, self.perte_entreprise, c)
     return self.perte_entreprise
   
-  def calcul(self):
+  def calcul(self, ap = 0, ap_agricole = 0, ap_autres = 0, ap_capital = 0):
+    message = f"{round(self.revenu)} + {round(self.gain_perte)} - {round(self.deduction)} - {round(self.perte_entreprise)} "
+    message_reporte = ""
     calcul = self.revenu + self.gain_perte - self.deduction - self.perte_entreprise
-    print(round(self.revenu),"+", round(self.gain_perte), "-", round(self.deduction), "-", round(self.perte_entreprise), "=", round(calcul))
-    return f"{round(self.revenu)} + {round(self.gain_perte)} - {round(self.deduction)} - {round(self.perte_entreprise)} = {round(calcul)}"
+    if not ap == 0:
+      reporte = 0 if calcul - ap > 0 else calcul - ap
+      message_reporte += f"[INFO] revenu_net.RevenuNet.reporte {round(reporte)*-1} à reporter\n"
+      calcul -= (ap + reporte)
+      message += f"- {round(ap+reporte)} "
+    if not ap_agricole == 0:
+      reporte = 0 if self.revenu_agricole - ap_agricole > 0 else self.revenu_agricole - ap_agricole
+      calcul -= (ap_agricole + reporte)
+      message_reporte += f"[INFO] revenu_net.RevenuNet.reporte_agricole {round(reporte)*-1} à reporter\n"
+      message += f"- {round(ap_agricole+reporte)} "
+    if not ap_autres == 0:
+      reporte = 0 if calcul - ap_autres > 0 else calcul - ap_autres
+      message_reporte += f"[INFO] revenu_net.RevenuNet.reporte_autres {round(reporte)*-1} à reporter\n"
+      calcul -= (ap_autres + reporte)
+      message += f"- {round(ap_autres+reporte)} "
+    if not ap_capital == 0:
+      reporte = 0 if calcul - ap_capital > 0 else calcul - ap_capital
+      message_reporte += f"[INFO] revenu_net.RevenuNet.reporte_capital {round(reporte)*-1} à reporter\n"
+      calcul -= (ap_capital + reporte)
+      message += f"- {round(ap_capital+reporte)} "
+    message+= f"= {round(calcul)}"
+    print(message_reporte+message)
+    return message
       
 
