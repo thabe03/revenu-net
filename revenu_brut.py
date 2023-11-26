@@ -54,9 +54,12 @@ class RevenuBrut:
     
     def sb(self, salaire_net = 0, impot_revenu_fed_prov = 0, rrq = 0, ass_emploi = 0, ass_parentale = 0, rpa = 0, cot_syndic = 0, ass_collectif = 0):
         self.rpa = rpa
-        print("[INFO] revenu_brut.RevenuBrut.sb() Régime de rentes du Québec crédit d'impôt", rrq)
-        print("[INFO] revenu_brut.RevenuBrut.sb() Assurance emploi crédit d'impôt", ass_emploi)
-        print("[INFO] revenu_brut.RevenuBrut.sb() Régime du Québec d'assurance parentale crédit d'impôt", ass_parentale)
+        if not rrq == 0:
+            print("[INFO] revenu_brut.RevenuBrut.sb() Régime de rentes du Québec crédit d'impôt", rrq)
+        if not ass_emploi == 0:
+            print("[INFO] revenu_brut.RevenuBrut.sb() Assurance emploi crédit d'impôt", ass_emploi)
+        if not ass_emploi == 0:
+            print("[INFO] revenu_brut.RevenuBrut.sb() Régime du Québec d'assurance parentale crédit d'impôt", ass_parentale)
         self.salaire_brut = salaire_net + impot_revenu_fed_prov + rrq + ass_emploi + ass_parentale + rpa + cot_syndic + ass_collectif
         return self.salaire_brut
 

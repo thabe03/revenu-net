@@ -83,4 +83,3 @@ crb.rbe(salaire_brut=66000, commission_brute=24000, honoraire_admn=5000, patron_
 crb.dah(rpa=4500, cot_syndic=800)
 print(crb.calcul()=="115200 35100 0 80100")
 
-

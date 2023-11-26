@@ -1,5 +1,6 @@
 import revenu_net as rn
 import revenu_brut as rb
+import revenu_brut_auto as auto
 
 
 ######################################################################### pension pour ancien combattant exclue
@@ -70,6 +71,7 @@ print("*"*50, "203")
 crn = rn.RevenuNet()
 crn.a(revenu_net_emploi=13000, pension_ex=6000, ferr=600)
 crn.b(gain_capital_imposable=3000*2, perte_capital_deductible=13600*2, perte_placement=5600*2)
+crn.c()
 crn.d(perte_entreprise=28000, perte_loyer=2000)
 print(crn.calcul()=="19600 + 0 - 0 - 19600 = 0")
 
@@ -109,7 +111,6 @@ crn.a(prestation_retraite=25000, allocation_depart_retraite=20000, police_ass=50
 crn.c(frais_proc_ass_emploi=500,pension_ex=15000, frais_scolarite=2000)
 print(crn.calcul()=="45000 + 0 - 15500 - 0 = 29500")
 
-
 print("*"*50, "244")
 crn = rn.RevenuNet()
 crn.a(revenu_net_emploi=70000, prestation_consecutive_deces=25000)
@@ -148,7 +149,7 @@ crn.a(revenu_net_emploi=14000, revenu_interet=[3000,0])
 crn.b(gain_capital_imposable=1500*2, perte_capital_deductible=3000*2, perte_placement=2250*2)
 crn.c(reer=2500)
 crn.d(perte_entreprise=5000)
-print(crn.calcul(ap=10000)=="17000 + 750 - 2500 - 7250 - 10000 = 0")
+print(crn.calcul(ap=10000)=="17000 + 750 - 2500 - 7250 - 8000 = 0")
 
 print("*"*50, "251")
 crb = rb.RevenuBrut()
@@ -157,7 +158,7 @@ crb.calcul()
 crn = rn.RevenuNet()
 crn.a(revenu_net_emploi=crb.revenu_net_emploi, revenu_interet=[13000,0], revenu_dividende_determine=4000, revenu_entreprise=25000, revenu_agricole=7500)
 crn.b(gain_capital_imposable=40000)
-print(crn.calcul(ap_agricole=10000, ap_autres=70000, ap_capital=35000)=="69500 + 20000 - 0 - 0 - 7500 - 70000 - 12000 = 0")
+print(crn.calcul(ap_agricole=10000, ap_autre=70000, ap_capital=35000)=="69500 + 20000 - 0 - 0 - 7500 - 70000 - 12000 = 0")
 
 print("*"*50, "253")
 crn = rn.RevenuNet()
@@ -165,4 +166,39 @@ crn.a(revenu_net_emploi=15000, rpa=5480, revenu_dividende_determine=4000, revenu
 crn.b(perte_capital_deductible=13000, gain_capital_imposable=24000)
 crn.c(reer=1000, frais_opposition=2000, frais_demenagement=800)
 crn.d(perte_entreprise=14700)
-crn.calcul(ap_autres=3000, ap_capital=4000)
+print(crn.calcul(ap_autre=3000, ap_capital=4000)=="36000 + 5500 - 3800 - 14700 - 3000 - 4000 = 16000")
+
+print("*"*50, "255")
+cauto = auto.Auto(portion_personnelle=8000, portion_totale=32000)
+cauto.advantage_usage(mois=12, prix=40000)
+cauto.advantage_fonction(choix=1)
+cauto.calcul()
+crb = rb.RevenuBrut(cauto=cauto)
+crb.sb(salaire_net=38500, ass_collectif=500)
+crb.rbe(patron_cot_av=1000) # boni de fin d'année
+crb.calcul()
+crn = rn.RevenuNet()
+crn.a(revenu_net_emploi=crb.revenu_net_emploi, revenu_interet=[800,0])
+crn.b(gain_capital_imposable=8000)
+crn.c(reer=1500, frais_scolarite=1500, frais_demenagement=crn.fd(km_proximite_travail_etude=50, resiliation_bail=400, repas_par_jour=80, jour=16, entreposage=1000))
+print(crn.calcul()=="46559 + 4000 - 4100 - 0 = 46459")
+
+print("*"*50, "257")
+crn = rn.RevenuNet()
+crn.a(revenu_net_emploi=18500, revenu_interet=[3000,0], indeminite_accident=3200)
+crn.b(gain_capital_imposable=3000*2, perte_capital_deductible=5000*2)
+crn.c(frais_opposition=2500)
+crn.d(perte_entreprise=25000, perte_agricole=4100)
+print(crn.calcul()=="24700 + 0 - 2500 - 22200 = 0")
+
+print("*"*50, "259")
+crb = rb.RevenuBrut()
+crb.rbe(salaire_brut=60000)
+crb.dah(rpa=5600)
+crb.calcul()
+crn = rn.RevenuNet()
+crn.a(revenu_net_emploi=crb.revenu_net_emploi, revenu_dividende_determine=12000, revenu_dividende_etranger=850, allocation_depart_retraite=50000, revenu_interet=[1320,1000], moins_conseiller=500)
+crn.b(gain_capital_imposable=20000)
+crn.c(reer=30000)
+crn.d(perte_agricole=6000)
+print(crn.calcul()=="121780 + 10000 - 30000 - 4250 = 97530")
