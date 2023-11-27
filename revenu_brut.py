@@ -19,6 +19,12 @@ class RevenuBrut:
         self.patron_frais_deplacement = 0
         self.revenu_net_emploi = 0
         self.rpa = 0
+        self.rrq = 0
+        self.ass_emploi = 0
+        self.ass_parentale = 0
+        self.credit_salaire_result = 0
+        self.ass_maladie_prive = 0
+        self.impot_fed = 0
 
     def bure(self, fourn_cons = 0, loyer_bureau = 0, mois = 0, salaire_adjoint = 0):
         self.bureau = fourn_cons + loyer_bureau * mois + salaire_adjoint
@@ -52,16 +58,20 @@ class RevenuBrut:
             self.advantage_action = advantage_imposable + gain_cap_impos
             return self.advantage_action
     
-    def sb(self, salaire_net = 0, impot_revenu_fed_prov = 0, rrq = 0, ass_emploi = 0, ass_parentale = 0, rpa = 0, cot_syndic = 0, ass_collectif = 0):
+    def sb(self, salaire_net = 0, impot_fed = 0, impot_prov = 0, rrq = 0, ass_emploi = 0, ass_parentale = 0, rpa = 0, cot_syndic = 0, ass_collectif = 0, ass_maladie_prive = 0):
         self.rpa = rpa
-        if not rrq == 0:
-            print("[INFO] revenu_brut.RevenuBrut.sb() Régime de rentes du Québec crédit d'impôt", rrq)
-        if not ass_emploi == 0:
-            print("[INFO] revenu_brut.RevenuBrut.sb() Assurance emploi crédit d'impôt", ass_emploi)
-        if not ass_emploi == 0:
-            print("[INFO] revenu_brut.RevenuBrut.sb() Régime du Québec d'assurance parentale crédit d'impôt", ass_parentale)
-        self.salaire_brut = salaire_net + impot_revenu_fed_prov + rrq + ass_emploi + ass_parentale + rpa + cot_syndic + ass_collectif
+        self.rrq = rrq
+        self.ass_emploi = ass_emploi
+        self.ass_parentale = ass_parentale
+        self.ass_maladie_prive = ass_maladie_prive
+        self.impot_fed = impot_fed
+        self.salaire_brut = salaire_net + impot_fed + impot_prov + rrq + ass_emploi + ass_parentale + rpa + cot_syndic + ass_collectif + ass_maladie_prive
         return self.salaire_brut
+    
+    def credit_salaire(self):
+        self.credit_salaire_result = self.rrq*0.15 + self.ass_emploi*0.15 + self.ass_parentale*0.15
+        print(f"[INFO] credits_salaire {round(self.credit_salaire_result)}")
+        return self.credit_salaire_result
 
     def rbe(self, salaire_brut = 0, commission_brute = 0, patron_voyage_perso = 0, patron_frais_scol_perso = 0, advantage_pret = 0, honoraire_admn = 0, patron_cot_av = 0, patron_stationnement_perso = 0, advantage_action = 0, patron_cot_reer = 0, patron_frais_representation = 0, patron_cot_rpa = 0, patron_cot_rac = 0, patron_frais_scol_travail = 0, patron_frais_deplacement = 0): # av pour assurance-vie
         self.patron_frais_deplacement = patron_frais_deplacement
