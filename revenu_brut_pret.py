@@ -20,22 +20,8 @@ def index_mois(date):
   mois = date_obj.month
   return int(mois)
 
-def pret(*remb, pret = 0, taux_reduit = 0, taux = [0, 0, 0, 0], pour_travail = 0, start = 0, end = 0):
-  # start|end de l'année d'exercise
-  # refund = 2000,6
-  if pret == 0:
-      print("[ERREUR] pret.pret() déclarer le montant du prêt")
-      return 0
-  elif taux == [0, 0, 0, 0]:
-    print("[ERREUR] pret.pret() déclarer les taux pour chaque trimestre")
-    return 0
-  elif start == 0:
-    print("[ERREUR] pret.pret() déclarer le mois de départ de l'exercise")
-    return 0
-  elif end == 0:
-    print("[ERREUR] pret.pret() déclarer le mois de fin de l'exercise")
-    return 0
-  if not taux_reduit == 0:
+def pret(*remb, pret, taux_reduit, taux, pour_travail = 0, start, end):
+  if not remb:
     trimestre = [0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3]
     trimestre_total = len(trimestre)
     mois_actif = []
@@ -68,19 +54,16 @@ def pret(*remb, pret = 0, taux_reduit = 0, taux = [0, 0, 0, 0], pour_travail = 0
     interet_reel_paye = (pret * (taux_reduit/100) * mois_actif.count(True)/trimestre_total)
     interet_rep_paye = taux_habituel_cum - interet_reel_paye  
     if pour_travail == 1:
-      print("[INFO] pret.pret() intérêts réputés payés déductibles", interet_rep_paye)
-      print("[INFO] pret.pret() intérêts réellement payés déductibles", interet_reel_paye)
+      print("[INFO] pret.pret() intérêts réputés payés déductibles", round(interet_rep_paye))
+      print("[INFO] pret.pret() intérêts réellement payés déductibles", round(interet_reel_paye))
       avantage_imposable = taux_habituel_cum - interet_reel_paye
       return avantage_imposable
     else:
-      print("[INFO] pret.pret() intérêts réputés payés non déductibles", interet_rep_paye)
-      print("[INFO] pret.pret() intérêts réellement payés non déductibles", interet_reel_paye)
+      print("[INFO] pret.pret() intérêts réputés payés non déductibles", round(interet_rep_paye))
+      print("[INFO] pret.pret() intérêts réellement payés non déductibles", round(interet_reel_paye))
       avantage_imposable = taux_habituel_cum - interet_reel_paye
       return avantage_imposable
   else:
-    if not remb:
-      print("[ERREUR] pret.pret() déclarer le trimestre dans lequel les intérêts doivent être payés")
-      return 0
     trimestre = [0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3]
     trimestre_total = len(trimestre)
     mois_actif = []
@@ -120,12 +103,12 @@ def pret(*remb, pret = 0, taux_reduit = 0, taux = [0, 0, 0, 0], pour_travail = 0
     interet_reel_paye = (pret * (taux_reduit/100) * mois_actif.count(True)/trimestre_total)
     interet_rep_paye = taux_habituel_cum - interet_reel_paye  
     if pour_travail == 1:
-      print("[INFO] pret.pret() intérêts réputés payés déductibles", interet_rep_paye)
-      print("[INFO] pret.pret() intérêts réellement payés déductibles", interet_reel_paye)
+      print("[INFO] pret.pret() intérêts réputés payés déductibles", round(interet_rep_paye))
+      print("[INFO] pret.pret() intérêts réellement payés déductibles", round(interet_reel_paye))
       avantage_imposable = taux_habituel_cum - interet_reel_paye
       return avantage_imposable
     else:
-      print("[INFO] pret.pret() intérêts réputés payés non déductibles", interet_rep_paye)
-      print("[INFO] pret.pret() intérêts réellement payés non déductibles", interet_reel_paye)
+      print("[INFO] pret.pret() intérêts réputés payés non déductibles", round(interet_rep_paye))
+      print("[INFO] pret.pret() intérêts réellement payés non déductibles", round(interet_reel_paye))
       avantage_imposable = taux_habituel_cum - interet_reel_paye
       return avantage_imposable

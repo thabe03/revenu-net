@@ -74,6 +74,9 @@ class RevenuNet:
     self.imposition_federale_deduit_source = self.crb.impot_fed
     self.scolarite_limite = 5000
     self.gain_capital_imposable = 0
+    self.credit_transferable_result = 0
+    self.credit_salaire_result = 0
+    self.credit_transfere_result = 0
 
   @staticmethod
   def dd(array = []):
@@ -127,6 +130,14 @@ class RevenuNet:
     self.credit_scolarite_result = min((montant_scolarite*0.15), self.scolarite_limite*0.15)
     print(f"[INFO] credit_scolarite {round(self.credit_scolarite_result)}")
     return self.credit_scolarite_result
+  
+  def credit_transferable(self):
+    self.credit_transferable_result = self.credit_scolarite_result - (self.imposition_revenu_result - (self.credit_personnel_base_result+self.credit_salaire_result+self.credit_cad_emploi_result))
+    print(f"[INFO] credit_transferable {round(self.credit_transferable_result)}")
+    return self.credit_transferable_result
+  
+  def credit_transfere(self, montant_credit_transfere):
+    self.credit_transfere_result = montant_credit_transfere
   
   def credit_frais_medicaux(self, montant_frais_medicaux, remb_ass = 0):
     self.credit_frais_medicaux_result = (montant_frais_medicaux - remb_ass - (0.03*(self.revenu + self.gain_perte) if 0.03*(self.revenu + self.gain_perte) < self.frais_medicaux_limite else self.frais_medicaux_limite))*0.15
@@ -188,9 +199,10 @@ class RevenuNet:
     return impot  
   
   def credits(self, credit_salaire_result = 0):
+    self.credit_salaire_result = credit_salaire_result
     if not self.crb.credit_salaire_result == 0:
-      credit_salaire_result = self.crb.credit_salaire_result
-    array = [self.credit_pension_result, self.credit_conjoint_result, self.credit_raison_age_result, self.credit_personnel_base_result, self.credit_scolarite_result, self.credit_frais_medicaux_result, self.credit_don_result, self.credit_dividende_determine_result, self.credit_personne_charge_result, credit_salaire_result, self.credit_cad_emploi_result]
+      self.credit_salaire_result = self.crb.credit_salaire_result
+    array = [self.credit_pension_result, self.credit_conjoint_result, self.credit_raison_age_result, self.credit_personnel_base_result, self.credit_scolarite_result, self.credit_frais_medicaux_result, self.credit_don_result, self.credit_dividende_determine_result, self.credit_personne_charge_result, self.credit_salaire_result, self.credit_cad_emploi_result, self.credit_transfere_result]
     message = ""
     credits = 0
     for i in range(len(array)):

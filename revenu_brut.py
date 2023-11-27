@@ -25,6 +25,7 @@ class RevenuBrut:
         self.credit_salaire_result = 0
         self.ass_maladie_prive = 0
         self.impot_fed = 0
+        self.cot_syndic = 0
 
     def bure(self, fourn_cons = 0, loyer_bureau = 0, mois = 0, salaire_adjoint = 0):
         self.bureau = fourn_cons + loyer_bureau * mois + salaire_adjoint
@@ -61,11 +62,12 @@ class RevenuBrut:
     def sb(self, salaire_net = 0, impot_fed = 0, impot_prov = 0, rrq = 0, ass_emploi = 0, ass_parentale = 0, rpa = 0, cot_syndic = 0, ass_collectif = 0, ass_maladie_prive = 0):
         self.rpa = rpa
         self.rrq = rrq
+        self.cot_syndic = cot_syndic
         self.ass_emploi = ass_emploi
         self.ass_parentale = ass_parentale
         self.ass_maladie_prive = ass_maladie_prive
         self.impot_fed = impot_fed
-        self.salaire_brut = salaire_net + impot_fed + impot_prov + rrq + ass_emploi + ass_parentale + rpa + cot_syndic + ass_collectif + ass_maladie_prive
+        self.salaire_brut = salaire_net + impot_fed + impot_prov + rrq + ass_emploi + ass_parentale + rpa + self.cot_syndic + ass_collectif + ass_maladie_prive
         return self.salaire_brut
     
     def credit_salaire(self):
@@ -89,9 +91,11 @@ class RevenuBrut:
     def dah(self, depense_ext = 0, cot_syndic = 0, rpa = 0, bureau_centre_ville = 0, cot_professionnelle = 0, don = 0, frais_cartes_affaires = 0):
         if not rpa == 0:
             self.rpa = rpa
+        if not cot_syndic == 0:
+            self.cot_syndic = cot_syndic
         if not bureau_centre_ville == 0:
             self.bureau = bureau_centre_ville
-        self.deduction_article_huit = depense_ext + cot_syndic + self.rpa + self.bureau + cot_professionnelle
+        self.deduction_article_huit = depense_ext + self.cot_syndic + self.rpa + self.bureau + cot_professionnelle
         if self.patron_frais_deplacement == 0:
             self.deduction_article_huit+= self.cauto.deductible_amort_interet_pret
         if not self.patron_frais_deplacement == 0:
@@ -110,5 +114,8 @@ class RevenuBrut:
     
     def calcul(self):
         self.revenu_net_emploi = self.revenu_brut_emploi - self.deduction_article_huit - self.commission_brute if self.deduction_article_huit_vendeur > self.commission_brute else self.revenu_brut_emploi - self.deduction_article_huit - self.deduction_article_huit_vendeur
-        print("[INFO] revenu_brut.RevenuBrut.calcul()", round(self.revenu_brut_emploi), round(self.deduction_article_huit), round(self.commission_brute if self.deduction_article_huit_vendeur > self.commission_brute else self.revenu_brut_emploi), round(self.revenu_net_emploi))
+        if not self.deduction_article_huit_vendeur == 0:
+            print("[INFO] revenu_brut.RevenuBrut.calcul()", round(self.revenu_brut_emploi), round(self.deduction_article_huit), round(self.commission_brute if self.deduction_article_huit_vendeur > self.commission_brute else self.revenu_brut_emploi), round(self.revenu_net_emploi))
+        else:
+            print("[INFO] revenu_brut.RevenuBrut.calcul()", round(self.revenu_brut_emploi), round(self.deduction_article_huit), round(self.revenu_net_emploi))
         return f"{round(self.revenu_brut_emploi)} {round(self.deduction_article_huit)} {round(self.deduction_article_huit_vendeur)} {round(self.revenu_net_emploi)}"
