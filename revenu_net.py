@@ -116,8 +116,9 @@ class RevenuNet:
     print(f"[INFO] credit_conjoint {round(self.credit_conjoint_result)}")
     return self.credit_conjoint_result
   
-  def credit_raison_age(self):
-    self.credit_raison_age_result = (self.raison_age_montant_maximal - ((self.revenu + self.gain_perte - self.raison_age_limite_inf)*0.15))*0.15
+  def credit_raison_age(self): # à faire
+    if not self.revenu + self.gain_perte - self.deduction > self.raison_age_limite_sup:
+      self.credit_raison_age_result = (self.raison_age_montant_maximal - ((self.revenu + self.gain_perte - self.deduction - self.raison_age_limite_inf)*0.15))*0.15
     print(f"[INFO] credit_raison_age {round(self.credit_raison_age_result)}")
     return self.credit_raison_age_result
 
@@ -131,7 +132,7 @@ class RevenuNet:
     print(f"[INFO] credit_scolarite {round(self.credit_scolarite_result)}")
     return self.credit_scolarite_result
   
-  def credit_transferable(self):
+  def credit_transferable(self): # à faire
     self.credit_transferable_result = self.credit_scolarite_result - (self.imposition_revenu_result - (self.credit_personnel_base_result+self.credit_salaire_result+self.credit_cad_emploi_result))
     print(f"[INFO] credit_transferable {round(self.credit_transferable_result)}")
     return self.credit_transferable_result
@@ -139,12 +140,12 @@ class RevenuNet:
   def credit_transfere(self, montant_credit_transfere):
     self.credit_transfere_result = montant_credit_transfere
   
-  def credit_frais_medicaux(self, montant_frais_medicaux, remb_ass = 0):
-    self.credit_frais_medicaux_result = (montant_frais_medicaux - remb_ass - (0.03*(self.revenu + self.gain_perte) if 0.03*(self.revenu + self.gain_perte) < self.frais_medicaux_limite else self.frais_medicaux_limite))*0.15
+  def credit_frais_medicaux(self, montant_frais_medicaux, remb_ass = 0): # à faire
+    self.credit_frais_medicaux_result = (montant_frais_medicaux + self.crb.ass_maladie_prive - remb_ass - (0.03*(self.revenu + self.gain_perte - self.deduction) if 0.03*(self.revenu + self.gain_perte - self.deduction) < self.frais_medicaux_limite else self.frais_medicaux_limite))*0.15
     print(f"[INFO] credit_frais_medicaux {round(self.credit_frais_medicaux_result)}")
     return self.credit_frais_medicaux_result
   
-  def credit_don(self, montant_don):
+  def credit_don(self, montant_don): # à faire
     if not montant_don < 200:
       self.credit_don_result = (self.don_montant_premier * self.don_taux_premier) + ((montant_don - self.don_montant_premier)*self.don_taux_reste)
     else:
@@ -165,15 +166,15 @@ class RevenuNet:
     print(f"[INFO] imposition_revenu {round(self.imposition_revenu_result)}")
     return self.imposition_revenu_result
   
-  def imposition_base(self):
-    self.imposition_base_result = self.imposition_revenu_result - self.credits_result
-    print(f"[INFO] imposition_base {round(self.imposition_base_result)}")
-    return self.imposition_base_result
-  
   def credit_personne_charge(self, montant_personne_charge):
     self.credit_personne_charge_result = (self.montant_personnel_base - montant_personne_charge)*0.15
     print(f"[INFO] credit_personne_charge {round(self.credit_personne_charge_result)}")
     return self.credit_personne_charge_result
+  
+  def imposition_base(self):
+    self.imposition_base_result = self.imposition_revenu_result - self.credits_result
+    print(f"[INFO] imposition_base {round(self.imposition_base_result)}")
+    return self.imposition_base_result
   
   def credit_cad_emploi(self):
     self.credit_cad_emploi_result = min(self.cad_emploi_limite, self.calcul_result)*0.15
