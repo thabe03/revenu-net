@@ -133,7 +133,6 @@ class RevenuNet:
     return self.credit_scolarite_result
   
   def credit_transferable(self): # à faire
-    self.imposition_revenu()
     self.credit_transferable_result = self.credit_scolarite_result - (self.imposition_revenu_result - (self.credit_personnel_base_result+self.credit_salaire_result+self.credit_cad_emploi_result))
     print(f"[INFO] credit_transferable {round(self.credit_transferable_result)}")
     return self.credit_transferable_result
