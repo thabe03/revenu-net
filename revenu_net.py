@@ -133,6 +133,7 @@ class RevenuNet:
     return self.credit_scolarite_result
   
   def credit_transferable(self): # à faire
+    self.imposition_revenu()
     self.credit_transferable_result = self.credit_scolarite_result - (self.imposition_revenu_result - (self.credit_personnel_base_result+self.credit_salaire_result+self.credit_cad_emploi_result))
     print(f"[INFO] credit_transferable {round(self.credit_transferable_result)}")
     return self.credit_transferable_result
@@ -214,6 +215,13 @@ class RevenuNet:
     message = message[:-3]
     print(f"[INFO] credits {message} = {round(credits)}")
     return message
+  
+  def calcul_credits(self):
+    self.imposition_revenu()
+    self.credits()
+    self.imposition_base()
+    self.credit_abattement()
+    self.imposition_federale()
 
   def a(self, revenu_net_emploi = 0, revenu_entreprise = 0, revenu_agricole = 0, revenu_interet = [0,0], revenu_dividende_ordinaire = 0, revenu_dividende_determine = 0, pension_ex = 0, ferr = 0, psv = 0, rpa = 0, rrq = 0, prestation_retraite = 0, allocation_depart_retraite = 0, prestation_consecutive_deces = 0, police_ass = 0, bourse_etude = 0, revenu_location = 0, reer = [0,0], indeminite_accident = 0, revenu_dividende_etranger = 0, moins_conseiller = 0, revenu_retraite = 0):
     police_ass = 0
