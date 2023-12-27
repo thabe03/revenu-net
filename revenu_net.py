@@ -70,13 +70,18 @@ class RevenuNet:
     self.credits_result = 0
     self.abattement_taux = 0.165
     self.credit_abattement_result = 0
-    self.imposition_federale_result = 0
-    self.imposition_federale_deduit_source = self.crb.impot_fed
+    self.imposition_federal_result = 0
+    self.imposition_federal_deduit_source = self.crb.impot_fed
     self.scolarite_limite = 5000
     self.gain_capital_imposable = 0
     self.credit_transferable_result = 0
     self.credit_salaire_result = 0
     self.credit_transfere_result = 0
+    self.handicap_montant = 2230
+    self.deficiende_physique_limite = 8414
+    self.credit_deficience_physique_result = 0
+    self.credit_impot_etranger_result = 0
+    self.credit_contribution_parti_federaux_result = 0
 
   @staticmethod
   def dd(array = []):
@@ -117,8 +122,8 @@ class RevenuNet:
     return self.credit_conjoint_result
   
   def credit_raison_age(self): # à faire
-    if not self.revenu + self.gain_perte - self.deduction > self.raison_age_limite_sup:
-      self.credit_raison_age_result = (self.raison_age_montant_maximal - ((self.revenu + self.gain_perte - self.deduction - self.raison_age_limite_inf)*0.15))*0.15
+    if not self.revenu + self.gain_perte - self.deduction - self.pertes > self.raison_age_limite_sup:
+      self.credit_raison_age_result = (self.raison_age_montant_maximal - ((self.revenu + self.gain_perte - self.deduction - self.pertes - self.raison_age_limite_inf)*0.15))*0.15
     print(f"[INFO] credit_raison_age {round(self.credit_raison_age_result)}")
     return self.credit_raison_age_result
 
@@ -133,17 +138,24 @@ class RevenuNet:
     return self.credit_scolarite_result
   
   def credit_transferable(self): # à faire
-    self.credit_transferable_result = self.credit_scolarite_result - (self.imposition_revenu_result - (self.credit_personnel_base_result+self.credit_salaire_result+self.credit_cad_emploi_result))
+    self.imposition_revenu()
+    self.credits()
+    self.imposition_federal()
+    self.credit_transferable_result = self.credit_scolarite_result - (self.imposition_revenu_result - (self.credit_personnel_base_result+self.credit_salaire_result+self.credit_cad_emploi_result+self.credit_deficience_physique_result+self.credit_frais_medicaux_result))
     print(f"[INFO] credit_transferable {round(self.credit_transferable_result)}")
     return self.credit_transferable_result
   
   def credit_transfere(self, montant_credit_transfere):
-    self.credit_transfere_result = montant_credit_transfere
+    self.credit_transfere_result += montant_credit_transfere
+    print(f"[INFO] credit_transfere {round(montant_credit_transfere)}")
+    return self.credit_transfere_result
   
   def credit_frais_medicaux(self, montant_frais_medicaux, remb_ass = 0): # à faire
-    self.credit_frais_medicaux_result = (montant_frais_medicaux + self.crb.ass_maladie_prive - remb_ass - (0.03*(self.revenu + self.gain_perte - self.deduction) if 0.03*(self.revenu + self.gain_perte - self.deduction) < self.frais_medicaux_limite else self.frais_medicaux_limite))*0.15
+    tmp = (montant_frais_medicaux + self.crb.ass_maladie_prive - remb_ass - (0.03*(self.revenu + self.gain_perte - self.deduction - self.pertes) if 0.03*(self.revenu + self.gain_perte - self.deduction - self.pertes) < self.frais_medicaux_limite else self.frais_medicaux_limite))*0.15
+    self.credit_frais_medicaux_result = tmp if not tmp < 0 else 0
     print(f"[INFO] credit_frais_medicaux {round(self.credit_frais_medicaux_result)}")
     return self.credit_frais_medicaux_result
+
   
   def credit_don(self, montant_don): # à faire
     if not montant_don < 200:
@@ -166,8 +178,11 @@ class RevenuNet:
     print(f"[INFO] imposition_revenu {round(self.imposition_revenu_result)}")
     return self.imposition_revenu_result
   
-  def credit_personne_charge(self, montant_personne_charge):
-    self.credit_personne_charge_result = (self.montant_personnel_base - montant_personne_charge)*0.15
+  def credit_personne_charge(self, montant_personne_charge = 0, handicap = False):
+    if not handicap == True:
+      self.credit_personne_charge_result = (self.montant_personnel_base - montant_personne_charge)*0.15
+    else:
+      self.credit_personne_charge_result = (self.montant_personnel_base + self.handicap_montant - montant_personne_charge)*0.15
     print(f"[INFO] credit_personne_charge {round(self.credit_personne_charge_result)}")
     return self.credit_personne_charge_result
   
@@ -181,29 +196,52 @@ class RevenuNet:
     print(f"[INFO] credit_cad_emploi {round(self.credit_cad_emploi_result)}")
     return self.credit_cad_emploi_result
   
+  def credit_deficience_physique(self):
+    self.credit_deficience_physique_result = self.deficiende_physique_limite*0.15
+    print(f"[INFO] credit_deficience_physique {round(self.credit_deficience_physique_result)}")
+    return self.credit_deficience_physique_result
+  
   def credit_abattement(self):
     self.credit_abattement_result = self.imposition_base_result * self.abattement_taux
     print(f"[INFO] credit_abattement {round(self.credit_abattement_result)}")
     return self.credit_abattement_result
   
-  def imposition_federale(self):
-    self.imposition_federale_result = self.imposition_base_result - self.credit_abattement_result
-    impot = 0
-    message = ""
-    if self.imposition_federale_result < self.imposition_federale_deduit_source:
-      impot = (self.imposition_federale_result - self.imposition_federale_deduit_source)*-1
-      message = f"[INFO] imposition_federale Impôt fédérale à recevoir {round(impot)}"
-    elif self.imposition_federale_result > self.imposition_federale_deduit_source:
-      impot = self.imposition_federale_result - self.imposition_federale_deduit_source
-      message = f"[INFO] imposition_federale Impôt fédérale à payer {round(impot)}"
-    print(message)
-    return impot  
+  def credit_contribution_parti_federaux(self, montant_contribution_parti_federaux):
+    self.credit_contribution_parti_federaux_result = montant_contribution_parti_federaux*0.75
+    print(f"[INFO] credit_contribution_parti_federaux {round(self.credit_contribution_parti_federaux_result)}")
+    return self.credit_contribution_parti_federaux_result
   
-  def credits(self, credit_salaire_result = 0):
+  def credit_impot_etranger(self, montant_x):
+    self.credit_impot_etranger_result = montant_x/(self.revenu + self.gain_perte - self.deduction - self.pertes)*(self.imposition_base_result+self.credit_dividende_determine_result-self.credit_abattement_result)
+    print(f"[INFO] credit_impot_etranger {round(self.credit_impot_etranger_result)}")
+    return self.credit_impot_etranger_result
+  
+  def imposition_federal(self, montant_allocation_depart_retraite = 0):
+    self.imposition_federal_deduit_source += montant_allocation_depart_retraite
+    self.imposition_federal_result = self.imposition_base_result - self.credit_abattement_result
+    impot = 0
+    message = f"[INFO] imposition_federal {round(self.imposition_federal_result)}"
+    if not self.credit_impot_etranger_result == 0:
+      self.imposition_federal_result -= self.credit_impot_etranger_result
+      message += f" - {round(self.credit_impot_etranger_result)}"
+    if not self.credit_contribution_parti_federaux_result == 0:
+      self.imposition_federal_result -= self.credit_contribution_parti_federaux_result
+      message += f" - {round(self.credit_contribution_parti_federaux_result)}"
+    message += f" > impôt fédéral {round(self.imposition_federal_result)} - impôt fédéral déduit à la source {round(self.imposition_federal_deduit_source)}"
+    if self.imposition_federal_result < self.imposition_federal_deduit_source:
+      impot = (self.imposition_federal_result - self.imposition_federal_deduit_source)*-1
+      message += f" > impôt fédéral à recevoir {round(impot)}"
+    elif self.imposition_federal_result > self.imposition_federal_deduit_source:
+      impot = self.imposition_federal_result - self.imposition_federal_deduit_source
+      message += f" > impôt fédéral à payer {round(impot)}"
+    print(message)
+    return impot
+  
+  def credits(self, credit_salaire_result = 0, message_credits = True):
     self.credit_salaire_result = credit_salaire_result
     if not self.crb.credit_salaire_result == 0:
       self.credit_salaire_result = self.crb.credit_salaire_result
-    array = [self.credit_pension_result, self.credit_conjoint_result, self.credit_raison_age_result, self.credit_personnel_base_result, self.credit_scolarite_result, self.credit_frais_medicaux_result, self.credit_don_result, self.credit_dividende_determine_result, self.credit_personne_charge_result, self.credit_salaire_result, self.credit_cad_emploi_result, self.credit_transfere_result]
+    array = [self.credit_pension_result, self.credit_conjoint_result, self.credit_raison_age_result, self.credit_personnel_base_result, self.credit_scolarite_result, self.credit_frais_medicaux_result, self.credit_don_result, self.credit_dividende_determine_result, self.credit_personne_charge_result, self.credit_salaire_result, self.credit_cad_emploi_result, self.credit_transfere_result, self.credit_deficience_physique_result]
     message = ""
     credits = 0
     for i in range(len(array)):
@@ -212,29 +250,30 @@ class RevenuNet:
         message += f"{round(array[i])} + "
     self.credits_result = credits
     message = message[:-3]
-    print(f"[INFO] credits {message} = {round(credits)}")
+    if message_credits:
+      print(f"[INFO] credits {message} = {round(credits)}")
     return message
   
-  def calcul_credits(self):
-    self.imposition_revenu()
-    self.credits()
-    self.imposition_base()
-    self.credit_abattement()
-    self.imposition_federale()
+  def calcul_credits(self, montant_allocation_depart_retraite = 0):
+    message = ""
+    message += f"{round(self.imposition_revenu())}"
+    self.credits(message_credits=False)
+    message += f" {round(self.imposition_base())} {round(self.credit_abattement())} {round(self.imposition_federal(montant_allocation_depart_retraite = montant_allocation_depart_retraite))}"
+    return message
 
-  def a(self, revenu_net_emploi = 0, revenu_entreprise = 0, revenu_agricole = 0, revenu_interet = [0,0], revenu_dividende_ordinaire = 0, revenu_dividende_determine = 0, pension_ex = 0, ferr = 0, psv = 0, rpa = 0, rrq = 0, prestation_retraite = 0, allocation_depart_retraite = 0, prestation_consecutive_deces = 0, police_ass = 0, bourse_etude = 0, revenu_location = 0, reer = [0,0], indeminite_accident = 0, revenu_dividende_etranger = 0, moins_conseiller = 0, revenu_retraite = 0):
+  def a(self, revenu_net_emploi = 0, revenu_entreprise = 0, revenu_agricole = 0, revenu_interet = [0,0], revenu_dividende_ordinaire = 0, revenu_dividende_determine = 0, pension_ex = 0, ferr = 0, psv = 0, rpa = 0, rrq = 0, prestation_retraite = 0, allocation_depart_retraite = 0, prestation_consecutive_deces = 0, police_ass = 0, bourse_etude = 0, revenu_location = 0, reer = [0,0], indeminite_accident = 0, revenu_dividende_etranger = 0, moins_conseiller = 0):
     police_ass = 0
     bourse_etude = 0
     self.rpa = rpa
     self.psv = psv
     self.revenu_agricole = revenu_agricole
     self.indeminite_accident = indeminite_accident
-    self.revenu_retraite = revenu_retraite
+    self.revenu_retraite = rpa
     self.revenu_dividende_determine = revenu_dividende_determine
     if not self.crb.revenu_net_emploi == 0:
       revenu_net_emploi = self.crb.revenu_net_emploi
     prestation_consecutive_deces = prestation_consecutive_deces-self.dd([prestation_consecutive_deces]) if prestation_consecutive_deces - self.dd([prestation_consecutive_deces]) > 0 else 0
-    self.revenu = revenu_net_emploi + revenu_entreprise + self.revenu_agricole + revenu_interet[0]-revenu_interet[1] + revenu_dividende_ordinaire+int(revenu_dividende_ordinaire*0.15) + revenu_dividende_determine+int(revenu_dividende_determine*0.38) + pension_ex + ferr + self.psv + self.rpa + rrq + prestation_retraite + allocation_depart_retraite + prestation_consecutive_deces + revenu_location + reer[0]+reer[1] + self.indeminite_accident + revenu_dividende_etranger*100/85 - moins_conseiller + self.revenu_retraite
+    self.revenu = revenu_net_emploi + revenu_entreprise + self.revenu_agricole + revenu_interet[0]-revenu_interet[1] + revenu_dividende_ordinaire+int(revenu_dividende_ordinaire*0.15) + revenu_dividende_determine+int(revenu_dividende_determine*0.38) + pension_ex + ferr + self.psv + self.rpa + rrq + prestation_retraite + allocation_depart_retraite + prestation_consecutive_deces + revenu_location + reer[0]+reer[1] + self.indeminite_accident + revenu_dividende_etranger*100/85 - moins_conseiller
     return self.revenu
   
   def b(self, gain_capital_imposable = 0, perte_capital_deductible = 0, perte_placement = 0):
@@ -323,8 +362,8 @@ class RevenuNet:
         message_reporte += f"[INFO] calcul AP Perte en capital {round(reporte)} à reporter\n"
       message += f"- {round(calcul if (ap_capital - self.gain_capital_imposable) > calcul else min(self.gain_perte, ap_capital))} "
       calcul -= calcul if (ap_capital - self.gain_capital_imposable) > calcul else min(self.gain_perte, ap_capital)
-    message+= f"= {round(calcul)}"
-    print(message_reporte+message)
+    message += f"= {round(calcul)}"
+    print(message_reporte+message)    
     self.calcul_result = calcul
     return message
       
