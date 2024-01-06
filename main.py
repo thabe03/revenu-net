@@ -1,20 +1,11 @@
-# si patron, 1e
-#   si perso | affaire fin
-
-# avantage, 1e
-
-# nombre, 1 mot
-# dollar relié, prix_1 mot
-
-# Dépenses personnelles
-# prime d'assurance-vie, médicale et dentaire
-# honoraire pour déclaration de revenus
-
+import journal_general
+import sys
+from openpyxl import load_workbook
+import datetime
+import os
+import xlwt
 import deduction_permise
 from datetime import datetime
-
-def revenu_interet(pret = 0, taux_interet = 0.0, nb_jour = 0):
-  return pret * taux_interet * nb_jour / 365
 
 def day_of_year(date_str):
     try:
@@ -25,44 +16,172 @@ def day_of_year(date_str):
         print("[ERREUR] day_of_year format invalide")
         return 0
 
-def revenu_net_biens(revenu_interet = 0, interet_obligation = 0):
-  return revenu_interet + interet_obligation
+def write_excel():
+    jg = []
 
+    nom_fichier_excel = "Classeur.xlsx"
+    feuille_excel = "Feuil1"
+    wb = load_workbook(nom_fichier_excel)
+    feuille = wb[feuille_excel]
+    nombre_lignes = feuille.max_row
 
+    for i in range(2, nombre_lignes + 1):  # Commencer à la ligne 2 pour éviter l'en-tête
+        date = feuille.cell(row=i, column=1).value
+        date = date.strftime('%Y-%m-%d')
+        no_compte = feuille.cell(row=i, column=2).value
+        montant = feuille.cell(row=i, column=3).value
+        jg.append([date,[[no_compte, montant]]])
+    print(jg)
+    compta = journal_general.Comptabilite(jg)
+    compta.calcul_bilan()
+    no_compte = ""
+    while True:
+        no_compte = input('Voir le grand livre pour (laisser vide si non)>>')
+        if no_compte == "":
+            break
+        else:
+            compta.get_by_no_history(int(no_compte))
 
+# write_excel()
 
+print("#"*50, "411")
+999000-4033-2854-(115600+620556-11425-6885+12601+8745-119350)
 
+print("#"*50, "5")
+no = [4120,5300,5420,5740,5500,5640,3100,3200,3300,1010,1190,1400,1900,1960,2050,2100,2900]
+montant = [29000,8664,2000,818,2272,1636,60000,5000,3000,2000,3250,32860,300000,115000,35000,2500,340000]
+compta = journal_general.Comptabilite()
+compta.balance_verification_simplifie(no, montant)
+compta.calcul_bilan()
 
-print("*"*50, "244")
-revenu = rn.a(revenu_net_emploi=70000, prestation_consecutive_deces=[25000, deduction_permise.beneficiaire([25000])])
-gain_perte = 0
-gain_perte_cum = revenu + gain_perte
-deduction_ap = 4000
-deduction = c(pension_ex=6000, frais_demenagement=deduction_permise.frais_demenagement(km_proximite_travail_etude=20, repas_par_jour=100/15, logement_par_jour=800/15, jour=15, resiliation_bail=500, demenagement=1900, entreposage=920), b=gain_perte_cum) - deduction_ap
-deduction_cum = gain_perte_cum - deduction
-perte_entreprise = 0
-total = revenu + gain_perte - deduction - perte_entreprise
-print(revenu,"+", gain_perte, "-", deduction, "-", perte_entreprise, "=", total) # 85000 + 0 - 6220 - 0 = 78780
+print("#"*50, "29")
+jg = [["2023-04-31",[[1200,200]]],["2023-05-01",[[1010,400],[3100,400]]],["2023-05-03",[[1010,600],[2150,600]]],["2023-05-04",[[1010,-525],[1600,525]]],["2023-05-05",[[1010,-35],[1600,35]]],["2023-05-07",[[1010,-85],[1600,185],[2100,100]]],["2023-05-15",[[1010,-100],[2100,100]]]]
+compta = journal_general.Comptabilite(jg)
+compta.calcul_bilan()
 
-  
-print("*"*50, "245")
-rbe = revenu_net_emploi(salaire_brut=83000, patron_frais_representation=2700, patron_cot_reer=1500)
-dah = deductible_art_huit(rpa=3800)
-rne = rbe - dah
-revenu = a(revenu_net_emploi=rne, prestation_consecutive_deces=[15000, deduction_permise.beneficiaire([15000])], allocation_depart_retraite=100000, rpa=12000, psv=3025, rrq=7500)
-gain_perte = 0
-gain_perte_cum = revenu + gain_perte
-deduction_ap = 0
-deduction = c(frais_demenagement=deduction_permise.frais_demenagement(km_proximite_travail_etude=0,demenagement=1200, jour=1), reer=20000+2500, frais_opposition=300, b=gain_perte_cum, psv=3025) - deduction_ap
-deduction_cum = gain_perte_cum - deduction
-perte_entreprise = 0
-total = revenu + gain_perte - deduction - perte_entreprise
-print(revenu,"+", gain_perte, "-", deduction, "-", perte_entreprise, "=", total) # 210925 + 0 - 25825 - 0 = 185100
+print("#"*50, "51")
+jg = [["2023-01-01", [[1010,60000],[3100,60000]]],["2023-01-02", [[1010,365000],[2900,365000]]],["2023-01-02",[[1010,-415000],[1960,115000],[1900,300000]]],["2023-01-03",[[1010,150],[4220,150]]],["2023-01-03",[[1010,2000],[3200,2000]]],["2023-01-04",[[1010,-200],[5815,200]]],["2023-01-05",[[1100,130],[4220,130]]],["2023-01-06",[[1010,-500],[3300,500]]]]
+compta = journal_general.Comptabilite(jg)
+compta.calcul_bilan()
+compta.get_by_no_history(4220)
 
-######################################################################### deduction_permise
+print("#"*50, "86")
+jg = [["2023-01-02", [[1960, 80000], [1900, 320000],[2900, 365000], [1010, -35000]]]]
+compta = journal_general.Comptabilite(jg)
+compta.calcul_bilan()
+compta.get_by_no_history(1010)
 
+no = [1960,1900,2900,1010]
+montant = [80000,320000,365000,-35000]
+compta = journal_general.Comptabilite()
+compta.balance_verification_simplifie(no, montant)
+compta.calcul_bilan()
 
+print("#"*50, "133")
+no = [1010,1100,1190,1800,2050,2150,2450,3100,3300,4110,5300,5410,5630,5705,5730,5740,5750,5780]
+montant = [21650,4340,2160,28620,2500,6835,110,30103,36000,154600,66524,18000,1825,8649,1460,650,3615,655]
+compta = journal_general.Comptabilite()
+compta.balance_verification_simplifie(no, montant)
+compta.calcul_bilan()
 
-# print("*"*50, "240")
-# frais_de_garde = deduction_permise.frais_de_garde(age_enfant=[5,9,17], revenu=13500, cpe=2500, colonie_vac=[400,2], gardiennage=0)
-# print(frais_de_garde) # 2750
+print("#"*50, "173")
+no = [1010,1100,1105,1110,1600,1900,1960,2100,2305,2310,2900,3100,3300,4120,5420,5640,5710,5740,5750]
+montant = [9504.51,517.39,296.26,591.04,5000,320000,80000,1108.89,98.75,197.01,365000,50000,750,1975,125,500,319.06,106.39,670]
+compta = journal_general.Comptabilite()
+compta.balance_verification_simplifie(no, montant)
+compta.calcul_bilan()
+
+print("#"*50, "283")
+no = [1010,1100,1105,1110,1125,1190,1210,1220,1300,1310,1500,1510,1600,1610,1800,1810,1900,1910,1960,2100,2305,2310,2350,2450,2460,2900,3100,3200,3300,4120,4130,4250,4290,5300,5410,5420,5500,5730,5740,5750,5780,5820,5840,5850,5870,5880]
+montant = [10119.21,9585.25,478.75,955.11,1780,1640,990,3200,45000,3200,6958.03,2512.62,60000,33600,23000,5000,450000,52500,30000,51055.92,3187.5,6359.06,2460,662.33,4230,132465.02,193500,5000,12000,279745.99,16780,37020,33.33,65420,19000,13429.25,8241.5,10540.17,1230,3736.69,8588.47,2000,2319.34,17600,4000,17500]
+compta = journal_general.Comptabilite()
+compta.balance_verification_simplifie(no, montant)
+compta.calcul_bilan()
+            
+print("#"*50, "7_e9")
+no = [1010,1100,1960,1900,1190,2100,2900,3100]
+montant = [1700,16900,45000,170000,3400,14600,140000,82400]
+compta = journal_general.Comptabilite()
+compta.balance_verification_simplifie(no, montant)
+compta.calcul_bilan()
+
+print("#"*50, "7_e10")
+no = [1010,1100,1190,1960,1900,1980,2900,3100,3475]
+montant = [10900,37800,1400,27000,48000,16500,75400,20000,46200]
+compta = journal_general.Comptabilite()
+compta.balance_verification_simplifie(no, montant)
+compta.calcul_bilan()
+
+print("#"*50, "9")
+no = [1010,1100,1200,1960,1900,1980,2100,2150,2900,3100]
+montant = [175,3125,1500,10000,65000,105000,1700,1500,105000,76600]
+compta = journal_general.Comptabilite()
+compta.balance_verification_simplifie(no, montant)
+compta.calcul_bilan()
+
+print("#"*50, "10")
+no = [1010,1100,1180,1180,1220,1600,1600,1600,2050,2050,2350,2450,2460,3100]
+montant = [100,1500,175,35,75,2100,1500,745,1250,975,500,125,650,2730]
+compta = journal_general.Comptabilite()
+compta.balance_verification_simplifie(no, montant)
+compta.calcul_bilan()
+
+print("#"*50, "11")
+no = [1010,1100,1960,1900,1400,2100,2900,3100]
+montant = [4800,30800,50000,138000,14400,24200,60000,153800]
+compta = journal_general.Comptabilite()
+compta.balance_verification_simplifie(no, montant)
+compta.calcul_bilan()
+
+print("#"*50, "12")
+no = [1010,1160,1100,1960,1900,1400,2100,2900,3100]
+montant = [9600,15000,30800,25000,138000,14400,19000,60000,153800]
+compta = journal_general.Comptabilite()
+compta.balance_verification_simplifie(no, montant)
+compta.calcul_bilan()
+
+print("#"*50, "13")
+jg = [['2023-08-25', [[1010, 18000]]], ['2023-08-05', [[3200, 18000]]], ['2023-08-26', [[1010, 75000]]], ['2023-08-26', [[2900, 75000]]], ['2023-08-27', [[1010, -90000]]], ['2023-08-27', [[1960, 18000]]], ['2023-08-27', [[1900, 72000]]], ['2023-08-27', [[1010, -2500]]], ['2023-08-27', [[1600, 10000]]], ['2023-08-27', [[2150, 6500]]], ['2023-08-27', [[3200, 1000]]], ['2023-08-28', [[1010, -200]]], ['2023-08-28', [[1180, 1200]]], ['2023-08-28', [[2100, 1000]]], ['2023-08-29', [[1180, -100]]], ['2023-08-29', [[2100, -100]]], ['2023-08-31', [[1180, -100]]], ['2023-08-31', [[3300, 100]]]]
+compta = journal_general.Comptabilite(jg)
+compta.calcul_bilan()
+        
+print("#"*50, "14")
+jg = [['2023-05-02', [[1010, 5000]]], ['2023-05-02', [[3100, 5000]]], ['2023-05-03', [[1010, 2000]]], ['2023-05-03', [[2150, 2000]]], ['2023-05-04', [[1010, -6000]]], ['2023-05-04', [[1900, 6000]]], ['2023-05-04', [[1010, 500]]], ['2023-05-04', [[1160, 1000]]], ['2023-05-04', [[1900, -1500]]], ['2023-05-05', [[1190, 250]]], ['2023-05-05', [[2100, 250]]], ['2023-05-05', [[1160, 50]]], ['2023-05-05', [[1190, -50]]], ['2023-05-06', [[1010, 300]]], ['2023-05-06', [[2460, 300]]], ['2023-05-06', [[1160, 700]]], ['2023-05-06', [[1900, -700]]]]
+compta = journal_general.Comptabilite(jg)
+compta.calcul_bilan()
+
+print("#"*50, "25")
+jg = [['2023-08-03', [[1010, 16000]]], ['2023-08-03', [[3200, 16000]]], ['2023-08-05', [[1960, 10000]]], ['2023-08-05', [[1900, 80000]]], ['2023-08-05', [[1010, -15000]]], ['2023-08-05', [[2900, 75000]]], ['2023-08-08', [[1600, 5000]]], ['2023-08-08', [[4180, 5000]]], ['2023-08-10', [[1010, 400]]], ['2023-08-10', [[2460, 400]]], ['2023-08-11', [[4180, -1000]]], ['2023-08-11', [[1010, -1000]]]]
+compta = journal_general.Comptabilite(jg)
+compta.calcul_bilan()    
+
+print("#"*50, "31")
+jg = [['2023-01-03', [[1010, 200000]]], ['2023-01-03', [[3200, 200000]]], ['2023-01-09', [[1960, 45000]]], ['2023-01-09', [[1010, -45000]]], ['2023-01-11', [[1900, 110000]]], ['2023-01-11', [[1010, -110000]]], ['2023-01-17', [[1400, 5000]]], ['2023-01-17', [[4180, 5000]]], ['2023-01-26', [[1010, 5000]]], ['2023-01-26', [[4180, 5000]]], ['2023-01-27', [[4180, -5000]]], ['2023-01-27', [[1010, -5000]]], ['2023-01-28', [[1160, 22500]]], ['2023-01-28', [[1960, -22500]]], ['2023-01-30', [[1010, 7500]]], ['2023-01-30', [[3200, 7500]]], ['2023-01-31', [[1010, 1250]]], ['2023-01-31', [[1160, -1250]]], ['2023-01-31', [[1600, 35000]]], ['2023-01-31', [[1010, -30000]]], ['2023-01-31', [[4180, 5000]]]]
+compta = journal_general.Comptabilite(jg)
+compta.calcul_bilan()     
+        
+print("#"*50, "36")
+jg = [['2023-05-20', [[1010, 15000]]], ['2023-05-20', [[1600, 7000]]], ['2023-05-20', [[1800, 20000]]], ['2023-05-20', [[3200, 42000]]], ['2023-05-22', [[1960, 15000]]], ['2023-05-22', [[1900, 20000]]], ['2023-05-22', [[2900, 25000]]], ['2023-05-22', [[1010, -10000]]], ['2023-05-24', [[1800, 5500]]], ['2023-05-24', [[4180, 5500]]], ['2023-05-25', [[1160, 5000]]], ['2023-05-25', [[1960, -5000]]], ['2023-05-27', [[4180, -2750]]], ['2023-05-27', [[1010, -2750]]], ['2023-05-28', [[1600, 1500]]], ['2023-05-28', [[2100, 1500]]], ['2023-05-29', [[3200, -500]]], ['2023-05-29', [[1600, -500]]], ['2023-05-31', [[1010, 1000]]], ['2023-05-31', [[1160, -1000]]]]
+compta = journal_general.Comptabilite(jg)
+compta.calcul_bilan()     
+        
+print("#"*50, "39")
+jg = [['2023-10-01', [[1010, 49000]]], ['2023-10-01', [[3200, 49000]]], ['2023-10-04', [[1960, 24000]]], ['2023-10-04', [[1900, 96000]]], ['2023-10-04', [[1010, -30000]]], ['2023-10-04', [[2900, 90000]]], ['2023-10-07', [[1600, 3850]]], ['2023-10-07', [[4180, 3850]]], ['2023-10-09', [[4180, -490]]], ['2023-10-09', [[1600, -490]]], ['2023-10-11', [[1160, 12000]]], ['2023-10-11', [[1960, -12000]]], ['2023-10-18', [[4180, -1400]]], ['2023-10-18', [[1010, -1400]]], ['2023-10-20', [[1010, 6000]]], ['2023-10-20', [[1160, -6000]]]]
+compta = journal_general.Comptabilite(jg)
+compta.calcul_bilan() 
+
+print("#"*50, "41")
+jg = [['2023-02-02', [[1010, 175000]]], ['2023-02-02', [[3200, 175000]]], ['2023-02-04', [[1960, 40000]]], ['2023-02-04', [[1900, 110000]]], ['2023-02-04', [[1010, -50000]]], ['2023-02-04', [[2900, 100000]]], ['2023-02-06', [[1180, 126000]]], ['2023-02-06', [[1010, -75000]]], ['2023-02-06', [[2100, 51000]]], ['2023-02-14', [[1010, 2000]]], ['2023-02-14', [[1100, 1500]]], ['2023-02-14', [[1180, -3500]]], ['2023-02-15', [[2100, -3500]]], ['2023-02-15', [[1180, -3500]]], ['2023-02-19', [[1600, 2500]]], ['2023-02-19', [[1010, -2500]]], ['2023-02-27', [[3200, -3500]]], ['2023-02-27', [[1180, -3500]]], ['2023-02-28', [[2100, -31000]]], ['2023-02-28', [[1010, -31000]]]]
+compta = journal_general.Comptabilite(jg)
+compta.calcul_bilan()         
+        
+print("#"*50, "44")
+jg = [['2023-05-02', [[1960, 10000]]], ['2023-05-02', [[2100, 10000]]], ['2023-05-04', [[1010, 15000]]], ['2023-05-04', [[1050, -15000]]], ['2023-05-05', [[2100, -200]]], ['2023-05-05', [[1010, -200]]], ['2023-05-06', [[1960, 50000]]], ['2023-05-06', [[4180, 50000]]], ['2023-05-07', [[2100, -10000]]], ['2023-05-07', [[1010, -10000]]], ['2023-05-09', [[1010, 150000]]], ['2023-05-09', [[2900, 150000]]], ['2023-05-10', [[4180, -50000]]], ['2023-05-10', [[1010, -50000]]], ['2023-05-15', [[1900, 100000]]], ['2023-05-15', [[1010, -100000]]], ['2023-05-20', [[1900, 25000]]], ['2023-05-20', [[1010, -5000]]], ['2023-05-20', [[4180, 20000]]], ['2023-05-25', [[1600, 10000]]], ['2023-05-25', [[4300, 10000]]], ['2023-05-31', [[1010, 2000]]], ['2023-05-31', [[2460, 2000]]]]
+compta = journal_general.Comptabilite(jg)
+compta.calcul_bilan() 
+        
+print("#"*50, "57")
+jg = [['2023-11-05', [[1010, 10000]]], ['2023-11-05', [[3200, 10000]]], ['2023-11-06', [[5410, 750]]], ['2023-11-06', [[1010, -750]]], ['2023-11-07', [[1210, 900]]], ['2023-11-07', [[1010, -900]]], ['2023-11-09', [[1010, 5800]]], ['2023-11-09', [[2460, 5800]]], ['2023-11-11', [[1600, 1800]]], ['2023-11-11', [[1010, -1800]]], ['2023-11-12', [[1600, 150]]], ['2023-11-12', [[2150, 150]]], ['2023-11-15', [[1010, 1400]]], ['2023-11-15', [[4110, 1400]]], ['2023-11-20', [[1190, 500]]], ['2023-11-20', [[1010, -500]]], ['2023-11-24', [[1100, 6500]]], ['2023-11-24', [[4110, 6500]]], ['2023-11-29', [[5630, 250]]], ['2023-11-29', [[1010, -250]]], ['2023-11-30', [[5300, 2150]]], ['2023-11-30', [[1010, -2150]]]] 
+compta = journal_general.Comptabilite(jg)
+compta.calcul_bilan() 
+        

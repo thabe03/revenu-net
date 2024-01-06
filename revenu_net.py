@@ -211,8 +211,8 @@ class RevenuNet:
     print(f"[INFO] credit_contribution_parti_federaux {round(self.credit_contribution_parti_federaux_result)}")
     return self.credit_contribution_parti_federaux_result
   
-  def credit_impot_etranger(self, montant_x):
-    self.credit_impot_etranger_result = montant_x/(self.revenu + self.gain_perte - self.deduction - self.pertes)*(self.imposition_base_result+self.credit_dividende_determine_result-self.credit_abattement_result)
+  def credit_impot_etranger(self, montant_impot_etranger):
+    self.credit_impot_etranger_result = (montant_impot_etranger*100/15)/(self.revenu + self.gain_perte - self.deduction - self.pertes)*(self.imposition_base_result+self.credit_dividende_determine_result-self.credit_abattement_result)
     print(f"[INFO] credit_impot_etranger {round(self.credit_impot_etranger_result)}")
     return self.credit_impot_etranger_result
   
@@ -287,14 +287,11 @@ class RevenuNet:
       self.gain_perte = 0
       return self.gain_perte
     else:
-      return self.gain_perte 
+      return self.gain_perte
   
-  def c(self, autres = 0, pension_ex = 0, frais_exploration = 0, frais_opposition = 0, frais_demenagement = 0, montant_fractionne = 0.0, frais_proc_ass_emploi = 0, prestation_consecutive_deces = 0, reer = 0, frais_scolarite = 0, prime_ass_vie_med_dent = 0):
+  def c(self, autres = 0, pension_ex = 0, frais_exploration = 0, frais_opposition = 0, frais_demenagement = 0, montant_fractionne = 0.0, frais_proc_ass_emploi = 0, reer = 0):
     if not frais_demenagement == 0:
       self.frais_demenagement = frais_demenagement
-    if frais_scolarite > 0:
-      print("[INFO] c crédit d'impôt pour frais de scolarité", frais_scolarite)
-      frais_scolarite = 0
     if montant_fractionne > 0:
       montant_fractionne = self.rpa * montant_fractionne
     b = self.revenu + self.gain_perte
@@ -304,9 +301,8 @@ class RevenuNet:
     self.frais_demenagement = reporter("c", "Frais de déménagement", 1, self.frais_demenagement, b)
     montant_fractionne = reporter("c", "Montant fractionné", 1, montant_fractionne, b)
     frais_proc_ass_emploi = reporter("c", "Frais d'appel en matière d'assurance-emploi", 1, frais_proc_ass_emploi, b)
-    prestation_consecutive_deces = reporter("c", "Prestation consécutive au décès", 1, prestation_consecutive_deces, b)
     reer = reporter("c", "Contribution au REER", 1, reer, b)
-    self.deduction = autres + pension_ex + frais_exploration + frais_opposition + self.frais_demenagement + montant_fractionne + frais_proc_ass_emploi + prestation_consecutive_deces + reer
+    self.deduction = autres + pension_ex + frais_exploration + frais_opposition + self.frais_demenagement + montant_fractionne + frais_proc_ass_emploi  + reer
     if 0.15*(b-self.deduction-77580) > 0 and not self.psv == 0:
       tmp = self.psv
       self.psv = 0.15*(b-self.deduction-77580)
