@@ -79,10 +79,12 @@ class Comptabilite:
     self.capital = 0
     self.pn = 0
     self.net = 0 
+    self.info = info
+    self.balance_verification = []
     if not jg == None:
-        self.shortcut_jg_bv(jg, info=info)
+        self.shortcut_jg_bv(jg)
 
-  def shortcut_jg_bv(self, jg, info = True):
+  def shortcut_jg_bv(self, jg):
     print("JOURNAL GÉNÉRAL")
     comptes = Comptes([])
     journal_general = []  
@@ -114,7 +116,7 @@ class Comptabilite:
     headers = ['date', "compte", 'no', 'débit', 'crédit']
     # write_excel(journal_general, "journal_general")
     journal_general_to_print = columnar(journal_general, headers, no_borders=True)
-    if not info == False:
+    if not self.info == False:
       print(journal_general_to_print)
     if not round(debit,0) == round(credit,0):
       print("[ERREUR] shortcut_jg_bv le débit et le crédit ne balancent pas", debit, credit)      
@@ -137,6 +139,8 @@ class Comptabilite:
           compte = comptes.get_by_no(tmp.no)
           compte.add_montant(tmp.montant, tmp.type, i)
     for i in comptes.get_all():
+      if not account_rn(i.no) == None:
+        self.balance_verification.append([i.no, i.solde, account_rn(i.no)])
       if i.type == 1:
         if not i.solde < 0:
           balance_verification.append([i.no, account_label(i.no), i.solde, ""])
@@ -152,7 +156,7 @@ class Comptabilite:
     balance_verification.append(["", "", round(debit,0), round(credit,0)]) 
     headers = ["no", "compte", "débit", "crédit"]
     balance_verification_to_print = columnar(balance_verification, headers, no_borders=True)
-    if not info == False:
+    if not self.info == False:
       print(balance_verification_to_print)
     if not round(debit,0) == round(credit,0):
       print("[ERREUR] shortcut_jg_bv le débit et le crédit ne balancent pas", round(debit,0), round(credit,0))
@@ -308,8 +312,11 @@ class Comptabilite:
     to_print.append(["Marge bénéficiaire brute", "", round(marge_beneficiaire_brute, 0)])
 
     to_print.append(["\nCharges - Charges d'exploitation\n", "", ""])
-    for i in self.charge_expl:
-        to_print.append([i[1], round(i[2], 0), ""])
+    for i in self.charge_expl:           
+        try:     
+          to_print.append([i[1], round(i[2], 0), ""])
+        except:
+          print(f"{i[1]} {i[2]}")
         charge += i[2]
     to_print.append(["Total des charges d'exploitation", "", round(charge, 0)])
 
@@ -322,7 +329,8 @@ class Comptabilite:
       self.pn = 0
       to_print.append(["Perte net", "", round(self.net, 0)])
     to_print = columnar(to_print, no_borders=True)
-    print(to_print)
+    if not self.info == False:
+      print(to_print)
 
   def etat_capitaux_propres(self):
     print("ÉTAT DES CAPITAUX PROPRES")
@@ -357,7 +365,8 @@ class Comptabilite:
       self.capital -= retrait
     to_print.append(["Capital", "", round(self.capital, 0)])
     to_print = columnar(to_print, no_borders=True)
-    print(to_print)
+    if not self.info == False:
+      print(to_print)
   
   def bilan(self):
     print("BILAN")
@@ -403,7 +412,8 @@ class Comptabilite:
     to_print.append(["Thalia Be - capital", "", round(self.capital, 0)])
     to_print.append(["Total du passif et des capitaux propres", "", round(pc+pl+self.capital, 0)])
     to_print = columnar(to_print, no_borders=True)
-    print(to_print)
+    if not self.info == False:
+      print(to_print)
     if not round(ac+al, 0) == round(pc+pl+self.capital, 0):
       print("[ERREUR] bilan l'actif n'est pas égal au passif+capitaux propres", round(ac+al, 0), round(pc+pl+self.capital, 0))
       return 0
@@ -448,6 +458,17 @@ def account_type(no):
   data = json.loads(response.text)
   type = data["plan_comptable"]["type"]
   return type
+
+def account_rn(no):
+  response = requests.get(f"http://127.0.0.1:5001/{no}", verify=False)
+  if not response.status_code == 200:
+    return 0
+  data = json.loads(response.text)
+  try:
+    api_rn = data["plan_comptable"]["api_rn"]
+    return api_rn
+  except:
+    return None
 
 def format_history(history):
     format_history = []

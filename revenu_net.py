@@ -1,4 +1,5 @@
 import revenu_brut as rb
+import journal_general
 def reporter(art, sticker, reporte = 0, montant = 0, total = 0):
   if reporte == 1:
     reporte = "à reporter"
@@ -6,13 +7,13 @@ def reporter(art, sticker, reporte = 0, montant = 0, total = 0):
     reporte = "non reportable"
     
   if not montant == 0 and total == 0:
-    print("[INFO]", art, sticker, montant, reporte)
+    print("[INFO]", art, sticker, round(montant), reporte)
     return 0
   elif not montant == 0 and not total == 0 and montant > total:
-    print("[INFO]", art, sticker, (total-montant)*-1, reporte)
+    print("[INFO]", art, sticker, round((total-montant)*-1), reporte)
     return total
   elif not montant == 0 and not total == 0 and montant <= total:
-    return montant
+    return round(montant)
   else:
     return 0
 
@@ -82,6 +83,10 @@ class RevenuNet:
     self.credit_deficience_physique_result = 0
     self.credit_impot_etranger_result = 0
     self.credit_contribution_parti_federaux_result = 0
+    self.revenu_location = 0
+    self.revenu_location_auto = 0
+    self.credit_investissement_result = 0
+    self.travailleur_autonome_rqap_format = 0
 
   @staticmethod
   def dd(array = []):
@@ -157,11 +162,13 @@ class RevenuNet:
     return self.credit_frais_medicaux_result
 
   
-  def credit_don(self, montant_don): # à faire
-    if not montant_don < 200:
-      self.credit_don_result = (self.don_montant_premier * self.don_taux_premier) + ((montant_don - self.don_montant_premier)*self.don_taux_reste)
+  def credit_don(self, montant_don = 0): # à faire
+    if not montant_don == 0:
+      self.revenu_entreprise_don = montant_don
+    if not self.revenu_entreprise_don < 200:
+      self.credit_don_result = (self.don_montant_premier * self.don_taux_premier) + ((self.revenu_entreprise_don - self.don_montant_premier)*self.don_taux_reste)
     else:
-      self.credit_don_result = montant_don * self.don_taux_premier
+      self.credit_don_result = self.revenu_entreprise_don * self.don_taux_premier
     print(f"[INFO] credit_don {round(self.credit_don_result)}")
     return self.credit_don_result
   
@@ -172,9 +179,31 @@ class RevenuNet:
   
   def imposition_revenu(self):
     if self.calcul_result < self.imposition_revenu_pallier_un:
-      self.imposition_revenu_result = self.calcul_result * self.imposition_revenu_pallier_un_taux
+      tmp_un = self.calcul_result * self.imposition_revenu_pallier_un_taux
+      tmp_result = tmp_un
     elif self.calcul_result < self.imposition_revenu_pallier_deux:
-      self.imposition_revenu_result = (self.imposition_revenu_pallier_un * self.imposition_revenu_pallier_un_taux) + ((self.calcul_result-self.imposition_revenu_pallier_un)*self.imposition_revenu_pallier_deux_taux)
+      tmp_un = self.imposition_revenu_pallier_un * self.imposition_revenu_pallier_un_taux
+      tmp_deux = (self.calcul_result - self.imposition_revenu_pallier_un)*self.imposition_revenu_pallier_deux_taux
+      tmp_result = tmp_un + tmp_deux
+    elif self.calcul_result < self.imposition_revenu_pallier_trois:
+      tmp_un = self.imposition_revenu_pallier_un * self.imposition_revenu_pallier_un_taux
+      tmp_deux = (self.imposition_revenu_pallier_deux - self.imposition_revenu_pallier_un)*self.imposition_revenu_pallier_deux_taux
+      tmp_trois = (self.calcul_result - self.imposition_revenu_pallier_deux)*self.imposition_revenu_pallier_trois_taux
+      tmp_result = tmp_un + tmp_deux + tmp_trois
+    elif self.calcul_result < self.imposition_revenu_pallier_quatre:
+      tmp_un = self.imposition_revenu_pallier_un * self.imposition_revenu_pallier_un_taux
+      tmp_deux = (self.imposition_revenu_pallier_deux - self.imposition_revenu_pallier_un)*self.imposition_revenu_pallier_deux_taux
+      tmp_trois = (self.imposition_revenu_pallier_trois - self.imposition_revenu_pallier_deux)*self.imposition_revenu_pallier_trois_taux
+      tmp_quatre = (self.calcul_result - self.imposition_revenu_pallier_trois)*self.imposition_revenu_pallier_quatre_taux
+      tmp_result = tmp_un + tmp_deux + tmp_trois + tmp_quatre
+    else:
+      tmp_un = self.imposition_revenu_pallier_un * self.imposition_revenu_pallier_un_taux
+      tmp_deux = (self.imposition_revenu_pallier_deux - self.imposition_revenu_pallier_un)*self.imposition_revenu_pallier_deux_taux
+      tmp_trois = (self.imposition_revenu_pallier_trois - self.imposition_revenu_pallier_deux)*self.imposition_revenu_pallier_trois_taux
+      tmp_quatre = (self.imposition_revenu_pallier_quatre - self.imposition_revenu_pallier_trois)*self.imposition_revenu_pallier_quatre_taux
+      tmp_cinq = (self.calcul_result - self.imposition_revenu_pallier_quatre)*self.imposition_revenu_pallier_cinq_taux
+      tmp_result = tmp_un + tmp_deux + tmp_trois + tmp_quatre + tmp_cinq
+    self.imposition_revenu_result = tmp_result
     print(f"[INFO] imposition_revenu {round(self.imposition_revenu_result)}")
     return self.imposition_revenu_result
   
@@ -216,24 +245,50 @@ class RevenuNet:
     print(f"[INFO] credit_impot_etranger {round(self.credit_impot_etranger_result)}")
     return self.credit_impot_etranger_result
   
-  def imposition_federal(self, montant_allocation_depart_retraite = 0):
+  def credit_investissement(self, montant_investissement = [0,0]):
+    self.credit_investissement_result = montant_investissement[0]*montant_investissement[1] # coût * crédit ex 0.1
+    print(f"[INFO] credit_investissement {round(self.credit_investissement_result)}")
+    return self.credit_investissement_result
+  
+  # https://www.canada.ca/fr/agence-revenu/services/impot/particuliers/sujets/tout-votre-declaration-revenus/declaration-revenus/remplir-declaration-revenus/deductions-credits-depenses/ligne-21300-remboursement-prestation-universelle-garde-enfants-puge.html">21300 remboursement de la prestation universelle pour la garde d'enfants, <a href="https://www.canada.ca/fr/agence-revenu/services/impot/particuliers/sujets/tout-votre-declaration-revenus/declaration-revenus/remplir-declaration-revenus/deductions-credits-depenses/ligne-21400-frais-garde-enfants.html">21400 Frais de garde d'enfants
+  # https://www.canada.ca/fr/agence-revenu/services/impot/particuliers/sujets/tout-votre-declaration-revenus/declaration-revenus/remplir-declaration-revenus/deductions-credits-depenses/ligne-22100-frais-financiers-frais-interet.html"> 22100 honoraires versés à un conseiller en placements
+  # https://www.canada.ca/fr/agence-revenu/services/impot/particuliers/sujets/tout-votre-declaration-revenus/declaration-revenus/remplir-declaration-revenus/deductions-credits-depenses/ligne-22900-autres-depenses-emploi.html">22900 dépense en télétravail
+  # https://www.canada.ca/fr/agence-revenu/services/impot/particuliers/sujets/tout-votre-declaration-revenus/declaration-revenus/remplir-declaration-revenus/deductions-credits-depenses/ligne-25600-deductions-supplementaires.html">25600 revenu étranger
+  # https://www.canada.ca/fr/agence-revenu/services/impot/particuliers/sujets/tout-votre-declaration-revenus/declaration-revenus/remplir-declaration-revenus/deductions-credits-depenses/ligne-31270-montant-achat-habitation.html
+  # https://www.canada.ca/fr/agence-revenu/services/impot/particuliers/sujets/tout-votre-declaration-revenus/declaration-revenus/remplir-declaration-revenus/deductions-credits-depenses/ligne-31300-frais-adoption.html
+  # https://www.canada.ca/fr/agence-revenu/services/impot/particuliers/sujets/tout-votre-declaration-revenus/declaration-revenus/remplir-declaration-revenus/deductions-credits-depenses/ligne-31900-interets-payes-vos-prets-etudiants.html
+  # https://www.canada.ca/fr/agence-revenu/services/impot/particuliers/sujets/tout-votre-declaration-revenus/declaration-revenus/remplir-declaration-revenus/deductions-credits-depenses/ligne-32300-vos-frais-scolarite-montant-relatif-etudes-montant-manuels.html">32300 vos frais de scolarité, montant relatif aux études et montant pour manuels
+  # https://www.canada.ca/fr/agence-revenu/services/impot/particuliers/sujets/tout-votre-declaration-revenus/declaration-revenus/remplir-declaration-revenus/deductions-credits-depenses/ligne-34900-dons.html">34900 dons
+  # https://www.canada.ca/fr/agence-revenu/services/impot/particuliers/sujets/tout-votre-declaration-revenus/declaration-revenus/remplir-declaration-revenus/deductions-credits-depenses/ligne-40500-credit-federal-impot-etranger.html">40500 crédit fédéral pour impôt étranger
+    
+  def imposition_federal(self, montant_allocation_depart_retraite = 0, acompte_provisionnel = 0):
     self.imposition_federal_deduit_source += montant_allocation_depart_retraite
     self.imposition_federal_result = self.imposition_base_result - self.credit_abattement_result
     impot = 0
     message = f"[INFO] imposition_federal {round(self.imposition_federal_result)}"
     if not self.credit_impot_etranger_result == 0:
       self.imposition_federal_result -= self.credit_impot_etranger_result
-      message += f" - {round(self.credit_impot_etranger_result)}"
+      message += f" - crédit d'impôt étranger {round(self.credit_impot_etranger_result)}"
+    if not acompte_provisionnel == 0:
+      self.imposition_federal_result -= acompte_provisionnel
+      message += f" - acompte provisionnel {round(acompte_provisionnel)}"
     if not self.credit_contribution_parti_federaux_result == 0:
       self.imposition_federal_result -= self.credit_contribution_parti_federaux_result
-      message += f" - {round(self.credit_contribution_parti_federaux_result)}"
-    message += f" > impôt fédéral {round(self.imposition_federal_result)} - impôt fédéral déduit à la source {round(self.imposition_federal_deduit_source)}"
+      message += f" - crédit pour contribution à un parti fédéral {round(self.credit_contribution_parti_federaux_result)}"
+    message += f" = impôt fédéral {round(self.imposition_federal_result)}\nimpôt fédéral {round(self.imposition_federal_result)} - impôt fédéral déduit à la source {round(self.imposition_federal_deduit_source)}"
     if self.imposition_federal_result < self.imposition_federal_deduit_source:
       impot = (self.imposition_federal_result - self.imposition_federal_deduit_source)*-1
-      message += f" > impôt fédéral à recevoir {round(impot)}"
+      self.credit_investissement_result = reporter("imposition_federal", "Crédit d'impot à l'investissement", 1, self.credit_investissement_result, impot)
+      message += f" = impôt fédéral à recevoir {round(impot)}"
     elif self.imposition_federal_result > self.imposition_federal_deduit_source:
       impot = self.imposition_federal_result - self.imposition_federal_deduit_source
-      message += f" > impôt fédéral à payer {round(impot)}"
+      print(f"[INFO] imposition_federal 40% du CII est remboursable {round((impot - self.credit_investissement_result)*0.4*-1)} et 60% reportable {round((impot - self.credit_investissement_result)*0.6*-1)}")
+      self.credit_investissement_result = reporter("imposition_federal", "Crédit d'impot à l'investissement", 1, self.credit_investissement_result, impot)
+      if not self.credit_investissement_result == 0:
+        message += f" - crédit d'impôt à l'investissement {round(self.credit_investissement_result)}"
+      impot-= self.credit_investissement_result
+      message += f" = impôt fédéral à payer {round(impot)}"
+      
     print(message)
     return impot
   
@@ -251,17 +306,32 @@ class RevenuNet:
     self.credits_result = credits
     message = message[:-3]
     if message_credits:
-      print(f"[INFO] credits {message} = {round(credits)}")
+      print(f"[INFO] credits {message} = {round(self.credits_result)}")
     return message
   
-  def calcul_credits(self, montant_allocation_depart_retraite = 0):
+  def calcul_credits(self, montant_allocation_depart_retraite = 0, acompte_provisionnel = 0):
     message = ""
     message += f"{round(self.imposition_revenu())}"
     self.credits(message_credits=False)
-    message += f" {round(self.imposition_base())} {round(self.credit_abattement())} {round(self.imposition_federal(montant_allocation_depart_retraite = montant_allocation_depart_retraite))}"
+    message += f" {round(self.imposition_base())} {round(self.credit_abattement())} {round(self.imposition_federal(montant_allocation_depart_retraite = montant_allocation_depart_retraite, acompte_provisionnel = acompte_provisionnel))}"
     return message
+  
+  def rl_auto(self, immatriculation = 0, permis = 0, essence_electricite = 0, assurances = 0, interet = [0,0], entretien_et_reparation = 0, frais_location_auto = 0):
+    self.revenu_location_auto = immatriculation + permis + essence_electricite + assurances + entretien_et_reparation + frais_location_auto
+    interet = min(interet[0], interet[1]*10) # minimum entre 10$*nombre de jour où l'intérêt a été payé, intérêt payé
+    self.revenu_location_auto+= interet
+    return self.revenu_location_auto
+  
+  # https://www.canada.ca/fr/agence-revenu/services/impot/entreprises/sujets/revenus-location/remplir-formulaire-t776-etat-loyers-biens-immeubles/depenses-vous-pouvez-deduire.html
+  def rl(self, taxes_foncieres = 0, interets_sur_hypotheque = 0, entretien_et_reparation = 0, assurances = 0, fnacc = [0,0], revenu_location = 0, publicite = 0, frais_bureau = 0, honoraire_professionnel = 0, salaire_verse = 0, frais_deplacement = 0, chauffage = 0, electricite = 0):
+    self.revenu_location = taxes_foncieres + interets_sur_hypotheque + entretien_et_reparation + assurances +  publicite + frais_bureau + honoraire_professionnel + salaire_verse + frais_deplacement + chauffage + electricite + self.revenu_location_auto
+    deduction_pour_amortissement = fnacc[0]*fnacc[1]
+    deduction_pour_amortissement = reporter("revenu_location", "Déduction pour amortissement", 0, deduction_pour_amortissement, revenu_location - self.revenu_location)
+    self.revenu_location+= deduction_pour_amortissement
+    self.revenu_location-=revenu_location
+    return self.revenu_location
 
-  def a(self, revenu_net_emploi = 0, revenu_entreprise = 0, revenu_agricole = 0, revenu_interet = [0,0], revenu_dividende_ordinaire = 0, revenu_dividende_determine = 0, pension_ex = 0, ferr = 0, psv = 0, rpa = 0, rrq = 0, prestation_retraite = 0, allocation_depart_retraite = 0, prestation_consecutive_deces = 0, police_ass = 0, bourse_etude = 0, revenu_location = 0, reer = [0,0], indeminite_accident = 0, revenu_dividende_etranger = 0, moins_conseiller = 0):
+  def a(self, revenu_net_emploi = 0, revenu_entreprise = 0, revenu_agricole = 0, revenu_interet = [0,0], revenu_dividende_ordinaire = 0, revenu_dividende_determine = 0, pension_ex = 0, ferr = 0, psv = 0, rpa = 0, rrq = 0, prestation_retraite = 0, allocation_depart_retraite = 0, prestation_consecutive_deces = 0, police_ass = 0, bourse_etude = 0, revenu_location = 0, reer = [0,0], indeminite_accident = 0, revenu_dividende_etranger = 0, moins_conseiller = 0, revenu_entreprise_don = 0):
     police_ass = 0
     bourse_etude = 0
     self.rpa = rpa
@@ -270,10 +340,13 @@ class RevenuNet:
     self.indeminite_accident = indeminite_accident
     self.revenu_retraite = rpa
     self.revenu_dividende_determine = revenu_dividende_determine
+    self.revenu_entreprise_don = revenu_entreprise_don
     if not self.crb.revenu_net_emploi == 0:
       revenu_net_emploi = self.crb.revenu_net_emploi
+    if not revenu_location == 0:
+      self.revenu_location = revenu_location
     prestation_consecutive_deces = prestation_consecutive_deces-self.dd([prestation_consecutive_deces]) if prestation_consecutive_deces - self.dd([prestation_consecutive_deces]) > 0 else 0
-    self.revenu = revenu_net_emploi + revenu_entreprise + self.revenu_agricole + revenu_interet[0]-revenu_interet[1] + revenu_dividende_ordinaire+int(revenu_dividende_ordinaire*0.15) + revenu_dividende_determine+int(revenu_dividende_determine*0.38) + pension_ex + ferr + self.psv + self.rpa + rrq + prestation_retraite + allocation_depart_retraite + prestation_consecutive_deces + revenu_location + reer[0]+reer[1] + self.indeminite_accident + revenu_dividende_etranger*100/85 - moins_conseiller
+    self.revenu = revenu_net_emploi + revenu_entreprise + self.revenu_entreprise_don + self.revenu_agricole + revenu_interet[0]-revenu_interet[1] + revenu_dividende_ordinaire+int(revenu_dividende_ordinaire*0.15) + revenu_dividende_determine+int(revenu_dividende_determine*0.38) + pension_ex + ferr + self.psv + self.rpa + rrq + prestation_retraite + allocation_depart_retraite + prestation_consecutive_deces + self.revenu_location + reer[0]+reer[1] + self.indeminite_accident + revenu_dividende_etranger*100/85 - moins_conseiller
     return self.revenu
   
   def b(self, gain_capital_imposable = 0, perte_capital_deductible = 0, perte_placement = 0):
@@ -302,7 +375,11 @@ class RevenuNet:
     montant_fractionne = reporter("c", "Montant fractionné", 1, montant_fractionne, b)
     frais_proc_ass_emploi = reporter("c", "Frais d'appel en matière d'assurance-emploi", 1, frais_proc_ass_emploi, b)
     reer = reporter("c", "Contribution au REER", 1, reer, b)
-    self.deduction = autres + pension_ex + frais_exploration + frais_opposition + self.frais_demenagement + montant_fractionne + frais_proc_ass_emploi  + reer
+    self.crb.travailleur_autonome_rrq /=2
+    self.crb.travailleur_autonome_rrq = reporter("c", "Contribution au RRQ - travailleur autonome", 1, self.crb.travailleur_autonome_rrq, b)
+    self.travailleur_autonome_rqap_format = self.crb.travailleur_autonome_rqap[0]-self.crb.travailleur_autonome_rqap[1]
+    self.travailleur_autonome_rqap_format = reporter("c", "Contribution au RQAP - travailleur autonome", 1, self.travailleur_autonome_rqap_format, b)
+    self.deduction = autres + pension_ex + frais_exploration + frais_opposition + self.frais_demenagement + montant_fractionne + frais_proc_ass_emploi + reer + self.crb.travailleur_autonome_rrq + self.travailleur_autonome_rqap_format
     if 0.15*(b-self.deduction-77580) > 0 and not self.psv == 0:
       tmp = self.psv
       self.psv = 0.15*(b-self.deduction-77580)

@@ -10,6 +10,7 @@ class Auto:
     self.imposable = 0
     self.deduction = 0
     self.remb_employeur = 0
+    self.deduction_travailleur_autonome = 0
 
   def advantage_usage(self, mois, prix):
     self.usage = 1667 * mois
@@ -52,9 +53,17 @@ class Auto:
     print("[INFO] auto.Auto.amort_interet_pret() Déduction pour l'amortissement du véhicule", round(self.portion_travail * amortissement), "et l'intérêt sur le prêt automobile", round(self.portion_travail * interet), "=", round(self.deductible_amort_interet_pret))
     return self.deductible_amort_interet_pret
   
+  # https://www.canada.ca/fr/agence-revenu/services/impot/entreprises/sujets/entreprise-individuelle-societe-personnes/depenses-entreprise/depenses-relatives-vehicules-a-moteur/frais-deductibles.html
+  def travailleur_autonome(self, portion, immatriculation = 0, permis = 0, essence_electricite = 0, assurances = 0, interet = [0,0], entretien_et_reparation = 0, frais_location_auto = 0):
+      self.deduction_travailleur_autonome = immatriculation + permis + essence_electricite + assurances + entretien_et_reparation + frais_location_auto
+      self.deduction_travailleur_autonome*= self.portion_travail
+      interet = min(interet[0], interet[1]*10) # minimum entre 10$*nombre de jour où l'intérêt a été payé, intérêt payé
+      self.deduction_travailleur_autonome+= interet
+      return self.deduction_travailleur_autonome
+  
   def calcul(self):
     self.imposable = self.usage + self.fonction
-    self.deduction = self.deduction_frais_fonctionnement + self.deductible_amort_interet_pret
+    self.deduction = self.deduction_frais_fonctionnement + self.deductible_amort_interet_pret - self.deduction_travailleur_autonome
     if not self.usage == 0:
       print("[INFO] auto.Auto.calcul() Avantage imposable pour l'usage", round(self.usage))
     if not self.fonction == 0:
@@ -65,4 +74,6 @@ class Auto:
       print("[INFO] auto.Auto.calcul() Déduction pour les frais de fonctionnement", round(self.deduction_frais_fonctionnement))
     if not self.deductible_amort_interet_pret == 0 and not self.deduction_frais_fonctionnement == 0:
       print("[INFO] auto.Auto.calcul() Déductions cumulées", round(self.deduction))
+    if not self.deduction_travailleur_autonome == 0:
+      print("[INFO] auto.Auto.calcul() Déductions pour travailleur autonome", round(self.deduction))
     return f"{round(self.imposable)} {round(self.deduction)}"

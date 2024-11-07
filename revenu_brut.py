@@ -1,6 +1,6 @@
 import revenu_brut_auto as auto
 class RevenuBrut:
-    def __init__(self, est_vendeur=False, cauto=auto.Auto(1,1), frais_repas=0, hebergement=0, frais_representation=0, frais_stationnement=0, membre_commerce=0, cout_ordinateur=0):
+    def __init__(self, est_vendeur=False, est_entrepreneur=False, cauto=auto.Auto(1,1), frais_repas=0, hebergement=0, frais_representation=0, frais_stationnement=0, membre_commerce=0, cout_ordinateur=0):
         self.revenu_brut_emploi = 0
         self.deduction_auto = 0
         self.deduction_article_huit = 0
@@ -26,6 +26,9 @@ class RevenuBrut:
         self.ass_maladie_prive = 0
         self.impot_fed = 0
         self.cot_syndic = 0
+        self.deduction_travailleur_autonome = 0
+        self.travailleur_autonome_rrq = 0
+        self.travailleur_autonome_rqap = [0,0]
 
     def bure(self, fourn_cons = 0, loyer_bureau = 0, mois = 0, salaire_adjoint = 0):
         self.bureau = fourn_cons + loyer_bureau * mois + salaire_adjoint
@@ -59,12 +62,14 @@ class RevenuBrut:
             self.advantage_action = advantage_imposable + gain_cap_impos
             return self.advantage_action
     
-    def sb(self, salaire_net = 0, impot_fed = 0, impot_prov = 0, rrq = 0, ass_emploi = 0, ass_parentale = 0, rpa = 0, cot_syndic = 0, ass_collectif = 0, ass_maladie_prive = 0):
+    def sb(self, salaire_net = 0, impot_fed = 0, impot_prov = 0, rrq = 0, ass_emploi = 0, ass_parentale = 0, rpa = 0, cot_syndic = 0, ass_collectif = 0, ass_maladie_prive = 0, travailleur_autonome_rrq = 0, travailleur_autonome_rqap=[0,0]):
         self.rpa = rpa
-        self.rrq = rrq
+        self.rrq = rrq if not rrq == 0 else travailleur_autonome_rrq/2
         self.cot_syndic = cot_syndic
         self.ass_emploi = ass_emploi
-        self.ass_parentale = ass_parentale
+        self.ass_parentale = ass_parentale if not ass_parentale == 0 else travailleur_autonome_rqap[1]
+        self.travailleur_autonome_rrq = travailleur_autonome_rrq
+        self.travailleur_autonome_rqap = travailleur_autonome_rqap
         self.ass_maladie_prive = ass_maladie_prive
         self.impot_fed = impot_fed
         self.salaire_brut = salaire_net + impot_fed + impot_prov + rrq + ass_emploi + ass_parentale + rpa + self.cot_syndic + ass_collectif + ass_maladie_prive
@@ -106,16 +111,24 @@ class RevenuBrut:
             self.deduction_article_huit+= self.cauto.deduction_frais_fonctionnement + self.frais_repas*0.5 + self.hebergement + self.frais_stationnement + self.frais_representation + self.membre_commerce
         return self.deduction_article_huit
 
+    # https://www.canada.ca/fr/agence-revenu/services/impot/particuliers/sujets/tout-votre-declaration-revenus/declaration-revenus/remplir-declaration-revenus/deductions-credits-depenses/ligne-22900-autres-depenses-emploi/employes-a-commission.html
     def dahv(self, telephone_bureau_centre_ville = 0, publicite = 0, location_ordi = 0):
         self.deduction_article_huit_vendeur = telephone_bureau_centre_ville + publicite + location_ordi
         if self.est_vendeur == True:
             self.deduction_article_huit_vendeur+= self.cauto.deduction_frais_fonctionnement + self.frais_repas*0.5 + self.hebergement + self.frais_stationnement + self.frais_representation*0.5 + self.membre_commerce
         return self.deduction_article_huit_vendeur
     
+    # https://www.canada.ca/fr/agence-revenu/services/impot/entreprises/sujets/entreprise-individuelle-societe-personnes/depenses-entreprise.html
+    def travailleur_autonome(self, frais_entretien = 0, salaire_verse = 0, assurances_professionnelles = 0, frais_bancaires = 0, congres = 0, loyer_paye = 0, fnacc_mobilier=[0,0], fourniture = 0, frais_demarrage = 0, frais_deplacement = 0, frais_gestion = 0, frais_livraison = 0, frais_transport = 0, divertissement = 0, publicite = 0, droit_adhesion = 0, permis = 0, cotisation = 0, telephone = 0, chauffage = 0, electricite = 0):
+        self.deduction_travailleur_autonome = self.cauto.deduction_travailleur_autonome + self.frais_repas*0.5 + self.hebergement + self.frais_stationnement + self.frais_representation*0.5 + self.membre_commerce + frais_entretien + salaire_verse + assurances_professionnelles + frais_bancaires + congres + loyer_paye + fnacc_mobilier[0]*fnacc_mobilier[1] + fourniture + frais_demarrage + frais_deplacement + frais_gestion + frais_livraison + frais_transport + divertissement + publicite + droit_adhesion + permis + cotisation + telephone + chauffage + electricite
+        return self.deduction_travailleur_autonome
+    
     def calcul(self):
-        self.revenu_net_emploi = self.revenu_brut_emploi - self.deduction_article_huit - self.commission_brute if self.deduction_article_huit_vendeur > self.commission_brute else self.revenu_brut_emploi - self.deduction_article_huit - self.deduction_article_huit_vendeur
+        self.revenu_net_emploi = self.revenu_brut_emploi - self.deduction_article_huit - self.commission_brute - self.deduction_travailleur_autonome if self.deduction_article_huit_vendeur > self.commission_brute else self.revenu_brut_emploi - self.deduction_article_huit - self.deduction_article_huit_vendeur - self.deduction_travailleur_autonome
         if not self.deduction_article_huit_vendeur == 0:
             print("[INFO] revenu_brut.RevenuBrut.calcul()", round(self.revenu_brut_emploi), round(self.deduction_article_huit), round(self.commission_brute if self.deduction_article_huit_vendeur > self.commission_brute else self.revenu_brut_emploi), round(self.revenu_net_emploi))
+        elif not self.deduction_travailleur_autonome == 0:
+            print("[INFO] revenu_brut.RevenuBrut.calcul()", round(self.revenu_brut_emploi), round(self.deduction_travailleur_autonome), round(self.revenu_net_emploi))
         else:
             print("[INFO] revenu_brut.RevenuBrut.calcul()", round(self.revenu_brut_emploi), round(self.deduction_article_huit), round(self.revenu_net_emploi))
-        return f"{round(self.revenu_brut_emploi)} {round(self.deduction_article_huit)} {round(self.deduction_article_huit_vendeur)} {round(self.revenu_net_emploi)}"
+        return f"{round(self.revenu_brut_emploi)} {round(self.deduction_article_huit)} {round(self.deduction_article_huit_vendeur)} {round(self.deduction_travailleur_autonome)} {round(self.revenu_net_emploi)}"
