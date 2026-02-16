@@ -312,7 +312,7 @@ class Comptabilite:
     to_print.append(["Marge bénéficiaire brute", "", round(marge_beneficiaire_brute, 0)])
 
     to_print.append(["\nCharges - Charges d'exploitation\n", "", ""])
-    for i in self.charge_expl:           
+    for i in self.charge_expl:     
         try:     
           to_print.append([i[1], round(i[2], 0), ""])
         except:
